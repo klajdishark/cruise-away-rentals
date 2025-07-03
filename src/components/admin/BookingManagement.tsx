@@ -1,13 +1,35 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calendar, Search, Filter, CheckCircle, XCircle, Clock, Eye } from 'lucide-react';
+import { Calendar, Search, Filter, CheckCircle, XCircle, Clock, Eye, Plus, Edit, Trash2 } from 'lucide-react';
+import { BookingModal } from './BookingModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
-const bookings = [
+interface Booking {
+  id: string;
+  customer: string;
+  vehicle: string;
+  startDate: string;
+  endDate: string;
+  status: 'pending' | 'confirmed' | 'active' | 'completed' | 'canceled';
+  total: number;
+  duration: number;
+  notes?: string;
+}
+
+const initialBookings: Booking[] = [
   {
     id: 'BK001',
     customer: 'John Doe',
@@ -68,8 +90,13 @@ const getStatusColor = (status: string) => {
 };
 
 export const BookingManagement = () => {
+  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | undefined>();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [bookingToDelete, setBookingToDelete] = useState<string | null>(null);
 
   const filteredBookings = bookings.filter(booking => {
     const matchesSearch = booking.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -78,6 +105,64 @@ export const BookingManagement = () => {
     return matchesSearch && matchesStatus;
   });
 
+  const handleCreateBooking = () => {
+    setSelectedBooking(undefined);
+    setIsModalOpen(true);
+  };
+
+  const handleEditBooking = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteBooking = (id: string) => {
+    setBookingToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (bookingToDelete) {
+      setBookings(bookings.filter(booking => booking.id !== bookingToDelete));
+      setBookingToDelete(null);
+    }
+    setIsDeleteDialogOpen(false);
+  };
+
+  const handleSubmitBooking = (data: any) => {
+    if (selectedBooking) {
+      // Update existing booking
+      setBookings(bookings.map(booking => 
+        booking.id === selectedBooking.id 
+          ? { 
+              ...booking, 
+              ...data,
+              duration: Math.ceil((new Date(data.endDate).getTime() - new Date(data.startDate).getTime()) / (1000 * 60 * 60 * 24))
+            }
+          : booking
+      ));
+    } else {
+      // Create new booking
+      const newBooking: Booking = {
+        id: `BK${String(bookings.length + 1).padStart(3, '0')}`,
+        ...data,
+        duration: Math.ceil((new Date(data.endDate).getTime() - new Date(data.startDate).getTime()) / (1000 * 60 * 60 * 24))
+      };
+      setBookings([...bookings, newBooking]);
+    }
+  };
+
+  const handleApprove = (id: string) => {
+    setBookings(bookings.map(booking => 
+      booking.id === id ? { ...booking, status: 'confirmed' as const } : booking
+    ));
+  };
+
+  const handleReject = (id: string) => {
+    setBookings(bookings.map(booking => 
+      booking.id === id ? { ...booking, status: 'canceled' as const } : booking
+    ));
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -85,10 +170,16 @@ export const BookingManagement = () => {
           <h1 className="text-3xl font-bold tracking-tight">Booking Management</h1>
           <p className="text-muted-foreground">Manage customer bookings and reservations</p>
         </div>
-        <Button>
-          <Calendar className="w-4 h-4 mr-2" />
-          Calendar View
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleCreateBooking}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Booking
+          </Button>
+          <Button variant="outline">
+            <Calendar className="w-4 h-4 mr-2" />
+            Calendar View
+          </Button>
+        </div>
       </div>
 
       {/* Booking Statistics */}
@@ -198,12 +289,36 @@ export const BookingManagement = () => {
                       <Button variant="outline" size="sm">
                         <Eye className="w-4 h-4" />
                       </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditBooking(booking)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDeleteBooking(booking.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                       {booking.status === 'pending' && (
                         <>
-                          <Button variant="outline" size="sm" className="text-green-600">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-green-600"
+                            onClick={() => handleApprove(booking.id)}
+                          >
                             <CheckCircle className="w-4 h-4" />
                           </Button>
-                          <Button variant="outline" size="sm" className="text-red-600">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-red-600"
+                            onClick={() => handleReject(booking.id)}
+                          >
                             <XCircle className="w-4 h-4" />
                           </Button>
                         </>
@@ -216,6 +331,28 @@ export const BookingManagement = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <BookingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        booking={selectedBooking}
+        onSubmit={handleSubmitBooking}
+      />
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the booking.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
