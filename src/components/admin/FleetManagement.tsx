@@ -5,9 +5,29 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search, Filter, Car, Settings, Calendar } from 'lucide-react';
+import { Plus, Search, Filter, Car, Settings, Calendar, Edit, Trash } from 'lucide-react';
+import { VehicleModal } from './VehicleModal';
+import { useToast } from '@/hooks/use-toast';
 
-const vehicles = [
+interface Vehicle {
+  id: number;
+  brand: string;
+  model: string;
+  year: number;
+  status: 'active' | 'rented' | 'maintenance' | 'inactive';
+  price: number;
+  location: string;
+  mileage: number;
+  nextService: string;
+  description?: string;
+  fuelType: 'gasoline' | 'diesel' | 'electric' | 'hybrid';
+  transmission: 'manual' | 'automatic';
+  seats: number;
+  color: string;
+  licensePlate: string;
+}
+
+const initialVehicles: Vehicle[] = [
   {
     id: 1,
     brand: 'Toyota',
@@ -18,6 +38,11 @@ const vehicles = [
     location: 'Downtown',
     mileage: 12500,
     nextService: '2024-02-15',
+    fuelType: 'gasoline',
+    transmission: 'automatic',
+    seats: 5,
+    color: 'Silver',
+    licensePlate: 'ABC-123',
   },
   {
     id: 2,
@@ -29,6 +54,11 @@ const vehicles = [
     location: 'Airport',
     mileage: 18200,
     nextService: '2024-03-20',
+    fuelType: 'gasoline',
+    transmission: 'manual',
+    seats: 5,
+    color: 'White',
+    licensePlate: 'DEF-456',
   },
   {
     id: 3,
@@ -40,6 +70,11 @@ const vehicles = [
     location: 'Downtown',
     mileage: 8900,
     nextService: '2024-01-30',
+    fuelType: 'gasoline',
+    transmission: 'automatic',
+    seats: 7,
+    color: 'Black',
+    licensePlate: 'GHI-789',
   },
   {
     id: 4,
@@ -51,6 +86,11 @@ const vehicles = [
     location: 'Mall',
     mileage: 5600,
     nextService: '2024-04-10',
+    fuelType: 'electric',
+    transmission: 'automatic',
+    seats: 5,
+    color: 'Red',
+    licensePlate: 'JKL-012',
   },
 ];
 
@@ -70,14 +110,84 @@ const getStatusColor = (status: string) => {
 };
 
 export const FleetManagement = () => {
+  const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | undefined>();
+  const { toast } = useToast();
 
   const filteredVehicles = vehicles.filter(vehicle => {
     const matchesSearch = `${vehicle.brand} ${vehicle.model}`.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || vehicle.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const handleAddVehicle = () => {
+    setEditingVehicle(undefined);
+    setIsModalOpen(true);
+  };
+
+  const handleEditVehicle = (vehicle: Vehicle) => {
+    setEditingVehicle(vehicle);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteVehicle = (vehicleId: number) => {
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    if (vehicle?.status === 'rented') {
+      toast({
+        title: "Cannot Delete Vehicle",
+        description: "This vehicle is currently rented and cannot be deleted.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setVehicles(prev => prev.filter(v => v.id !== vehicleId));
+    toast({
+      title: "Vehicle Deleted",
+      description: "The vehicle has been successfully removed from your fleet.",
+    });
+  };
+
+  const handleSubmitVehicle = (data: any) => {
+    if (editingVehicle) {
+      // Update existing vehicle
+      setVehicles(prev => prev.map(v => 
+        v.id === editingVehicle.id 
+          ? { ...v, ...data }
+          : v
+      ));
+      toast({
+        title: "Vehicle Updated",
+        description: "The vehicle information has been successfully updated.",
+      });
+    } else {
+      // Add new vehicle
+      const newVehicle: Vehicle = {
+        ...data,
+        id: Math.max(...vehicles.map(v => v.id)) + 1,
+        nextService: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 90 days from now
+      };
+      setVehicles(prev => [...prev, newVehicle]);
+      toast({
+        title: "Vehicle Added",
+        description: "The new vehicle has been successfully added to your fleet.",
+      });
+    }
+  };
+
+  const getFleetStats = () => {
+    const total = vehicles.length;
+    const available = vehicles.filter(v => v.status === 'active').length;
+    const rented = vehicles.filter(v => v.status === 'rented').length;
+    const maintenance = vehicles.filter(v => v.status === 'maintenance').length;
+    
+    return { total, available, rented, maintenance };
+  };
+
+  const stats = getFleetStats();
 
   return (
     <div className="space-y-6">
@@ -86,7 +196,7 @@ export const FleetManagement = () => {
           <h1 className="text-3xl font-bold tracking-tight">Fleet Management</h1>
           <p className="text-muted-foreground">Manage your vehicle inventory and maintenance</p>
         </div>
-        <Button>
+        <Button onClick={handleAddVehicle}>
           <Plus className="w-4 h-4 mr-2" />
           Add Vehicle
         </Button>
@@ -100,7 +210,7 @@ export const FleetManagement = () => {
             <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">124</div>
+            <div className="text-2xl font-bold">{stats.total}</div>
             <p className="text-xs text-muted-foreground">Across all locations</p>
           </CardContent>
         </Card>
@@ -111,7 +221,7 @@ export const FleetManagement = () => {
             <Car className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">87</div>
+            <div className="text-2xl font-bold">{stats.available}</div>
             <p className="text-xs text-muted-foreground">Ready for rental</p>
           </CardContent>
         </Card>
@@ -122,7 +232,7 @@ export const FleetManagement = () => {
             <Car className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">29</div>
+            <div className="text-2xl font-bold">{stats.rented}</div>
             <p className="text-xs text-muted-foreground">Out with customers</p>
           </CardContent>
         </Card>
@@ -133,7 +243,7 @@ export const FleetManagement = () => {
             <Settings className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-2xl font-bold">{stats.maintenance}</div>
             <p className="text-xs text-muted-foreground">Requires attention</p>
           </CardContent>
         </Card>
@@ -172,7 +282,7 @@ export const FleetManagement = () => {
                 <TableHead>Price/Day</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Mileage</TableHead>
-                <TableHead>Next Service</TableHead>
+                <TableHead>License Plate</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -182,7 +292,7 @@ export const FleetManagement = () => {
                   <TableCell>
                     <div>
                       <div className="font-medium">{vehicle.brand} {vehicle.model}</div>
-                      <div className="text-sm text-muted-foreground">{vehicle.year}</div>
+                      <div className="text-sm text-muted-foreground">{vehicle.year} • {vehicle.color}</div>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -193,10 +303,24 @@ export const FleetManagement = () => {
                   <TableCell>${vehicle.price}</TableCell>
                   <TableCell>{vehicle.location}</TableCell>
                   <TableCell>{vehicle.mileage.toLocaleString()} mi</TableCell>
-                  <TableCell>{vehicle.nextService}</TableCell>
+                  <TableCell>{vehicle.licensePlate}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">Edit</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditVehicle(vehicle)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDeleteVehicle(vehicle.id)}
+                        disabled={vehicle.status === 'rented'}
+                      >
+                        <Trash className="w-4 h-4" />
+                      </Button>
                       <Button variant="outline" size="sm">
                         <Calendar className="w-4 h-4" />
                       </Button>
@@ -208,6 +332,13 @@ export const FleetManagement = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <VehicleModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        vehicle={editingVehicle}
+        onSubmit={handleSubmitVehicle}
+      />
     </div>
   );
 };
