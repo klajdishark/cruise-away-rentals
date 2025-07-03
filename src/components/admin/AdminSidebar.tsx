@@ -7,10 +7,7 @@ import {
   Users, 
   CreditCard, 
   BarChart3, 
-  Tag, 
-  Headphones, 
-  Settings, 
-  Shield 
+  Settings 
 } from 'lucide-react';
 import {
   Sidebar,
@@ -36,10 +33,7 @@ const menuItems = [
   { id: 'customers', label: 'Customer Management', icon: Users },
   { id: 'payments', label: 'Payments & Invoicing', icon: CreditCard },
   { id: 'analytics', label: 'Reports & Analytics', icon: BarChart3 },
-  { id: 'promotions', label: 'Promotions & Discounts', icon: Tag },
-  { id: 'support', label: 'Support & Helpdesk', icon: Headphones },
   { id: 'settings', label: 'System Settings', icon: Settings },
-  { id: 'access-control', label: 'Admin Access Control', icon: Shield },
 ] as const;
 
 export const AdminSidebar = ({ currentView, onViewChange }: AdminSidebarProps) => {

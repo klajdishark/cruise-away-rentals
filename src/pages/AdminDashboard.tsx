@@ -7,10 +7,7 @@ import { BookingManagement } from '@/components/admin/BookingManagement';
 import { CustomerManagement } from '@/components/admin/CustomerManagement';
 import { PaymentsInvoicing } from '@/components/admin/PaymentsInvoicing';
 import { ReportsAnalytics } from '@/components/admin/ReportsAnalytics';
-import { PromotionsDiscounts } from '@/components/admin/PromotionsDiscounts';
-import { SupportHelpdesk } from '@/components/admin/SupportHelpdesk';
 import { SystemSettings } from '@/components/admin/SystemSettings';
-import { AdminAccessControl } from '@/components/admin/AdminAccessControl';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 export type AdminView = 
@@ -20,10 +17,7 @@ export type AdminView =
   | 'customers'
   | 'payments'
   | 'analytics'
-  | 'promotions'
-  | 'support'
-  | 'settings'
-  | 'access-control';
+  | 'settings';
 
 const AdminDashboard = () => {
   const [currentView, setCurrentView] = useState<AdminView>('overview');
@@ -42,14 +36,8 @@ const AdminDashboard = () => {
         return <PaymentsInvoicing />;
       case 'analytics':
         return <ReportsAnalytics />;
-      case 'promotions':
-        return <PromotionsDiscounts />;
-      case 'support':
-        return <SupportHelpdesk />;
       case 'settings':
         return <SystemSettings />;
-      case 'access-control':
-        return <AdminAccessControl />;
       default:
         return <DashboardOverview />;
     }
