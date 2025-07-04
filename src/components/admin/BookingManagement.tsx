@@ -30,6 +30,8 @@ interface Booking {
   notes?: string;
 }
 
+type ViewMode = 'table' | 'calendar';
+
 const initialBookings: Booking[] = [
   {
     id: 'BK001',
@@ -98,7 +100,7 @@ export const BookingManagement = () => {
   const [selectedBooking, setSelectedBooking] = useState<Booking | undefined>();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [bookingToDelete, setBookingToDelete] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
 
   const filteredBookings = bookings.filter(booking => {
     const matchesSearch = booking.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
