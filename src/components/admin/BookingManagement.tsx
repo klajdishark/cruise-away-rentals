@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calendar, Search, Filter, CheckCircle, XCircle, Clock, Eye, Plus, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Search, Filter, CheckCircle, XCircle, Clock, Eye, Plus, Edit, Trash2, Grid } from 'lucide-react';
 import { BookingModal } from './BookingModal';
+import { CalendarView } from './CalendarView';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -97,6 +98,7 @@ export const BookingManagement = () => {
   const [selectedBooking, setSelectedBooking] = useState<Booking | undefined>();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [bookingToDelete, setBookingToDelete] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
 
   const filteredBookings = bookings.filter(booking => {
     const matchesSearch = booking.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -163,6 +165,10 @@ export const BookingManagement = () => {
     ));
   };
 
+  if (viewMode === 'calendar') {
+    return <CalendarView />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -175,9 +181,21 @@ export const BookingManagement = () => {
             <Plus className="w-4 h-4 mr-2" />
             New Booking
           </Button>
-          <Button variant="outline">
-            <Calendar className="w-4 h-4 mr-2" />
-            Calendar View
+          <Button 
+            variant={viewMode === 'calendar' ? 'default' : 'outline'}
+            onClick={() => setViewMode(viewMode === 'calendar' ? 'table' : 'calendar')}
+          >
+            {viewMode === 'calendar' ? (
+              <>
+                <Grid className="w-4 h-4 mr-2" />
+                Table View
+              </>
+            ) : (
+              <>
+                <Calendar className="w-4 h-4 mr-2" />
+                Calendar View
+              </>
+            )}
           </Button>
         </div>
       </div>
