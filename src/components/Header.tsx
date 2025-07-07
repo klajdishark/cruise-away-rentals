@@ -1,12 +1,21 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Car, Menu, X, User, Shield } from 'lucide-react';
+import { Car, Menu, X, User, Shield, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, profile, signOut } = useAuth();
   
   const isActive = (path: string) => location.pathname === path;
   
@@ -16,6 +25,10 @@ const Header = () => {
     { href: '/how-it-works', label: 'How It Works' },
     { href: '/contact', label: 'Contact' },
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
@@ -46,21 +59,60 @@ const Header = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button asChild variant="ghost" className="rounded-full">
-              <Link to="/dashboard">
-                <User className="w-4 h-4 mr-2" />
-                Customer Dashboard
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" className="rounded-full">
-              <Link to="/admin">
-                <Shield className="w-4 h-4 mr-2" />
-                Admin Panel
-              </Link>
-            </Button>
-            <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white rounded-full">
-              <Link to="/cars">Book Now</Link>
-            </Button>
+            {user && profile ? (
+              <>
+                <Button asChild variant="ghost" className="rounded-full">
+                  <Link to={profile.role === 'admin' ? '/admin' : '/dashboard'}>
+                    {profile.role === 'admin' ? (
+                      <>
+                        <Shield className="w-4 h-4 mr-2" />
+                        Admin Panel
+                      </>
+                    ) : (
+                      <>
+                        <User className="w-4 h-4 mr-2" />
+                        Dashboard
+                      </>
+                    )}
+                  </Link>
+                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="rounded-full">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <User className="w-4 h-4 text-blue-600" />
+                      </div>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem disabled>
+                      {profile.first_name || profile.email}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to={profile.role === 'admin' ? '/admin' : '/dashboard'}>
+                        {profile.role === 'admin' ? 'Admin Panel' : 'Dashboard'}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Button asChild variant="ghost" className="rounded-full">
+                  <Link to="/auth">Sign In</Link>
+                </Button>
+                <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white rounded-full">
+                  <Link to="/cars">Book Now</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -92,24 +144,47 @@ const Header = () => {
                   {link.label}
                 </Link>
               ))}
+              
               <div className="pt-4 border-t border-gray-200 space-y-2">
-                <Button asChild variant="ghost" className="w-full justify-start rounded-full">
-                  <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
-                    <User className="w-4 h-4 mr-2" />
-                    Customer Dashboard
-                  </Link>
-                </Button>
-                <Button asChild variant="ghost" className="w-full justify-start rounded-full">
-                  <Link to="/admin" onClick={() => setIsMenuOpen(false)}>
-                    <Shield className="w-4 h-4 mr-2" />
-                    Admin Panel
-                  </Link>
-                </Button>
-                <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full">
-                  <Link to="/cars" onClick={() => setIsMenuOpen(false)}>
-                    Book Now
-                  </Link>
-                </Button>
+                {user && profile ? (
+                  <>
+                    <div className="text-sm text-gray-600 font-medium">
+                      {profile.first_name || profile.email}
+                    </div>
+                    <Button asChild variant="ghost" className="w-full justify-start rounded-full">
+                      <Link to={profile.role === 'admin' ? '/admin' : '/dashboard'} onClick={() => setIsMenuOpen(false)}>
+                        {profile.role === 'admin' ? (
+                          <>
+                            <Shield className="w-4 h-4 mr-2" />
+                            Admin Panel
+                          </>
+                        ) : (
+                          <>
+                            <User className="w-4 h-4 mr-2" />
+                            Dashboard
+                          </>
+                        )}
+                      </Link>
+                    </Button>
+                    <Button onClick={() => { handleSignOut(); setIsMenuOpen(false); }} variant="ghost" className="w-full justify-start rounded-full">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button asChild variant="ghost" className="w-full justify-start rounded-full">
+                      <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+                        Sign In
+                      </Link>
+                    </Button>
+                    <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full">
+                      <Link to="/cars" onClick={() => setIsMenuOpen(false)}>
+                        Book Now
+                      </Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </nav>
           </div>

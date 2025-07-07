@@ -12,6 +12,7 @@ import {
   Shield 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
@@ -22,12 +23,17 @@ const navItems = [
 
 export const UserSidebar = () => {
   const location = useLocation();
+  const { profile, signOut } = useAuth();
   
   const isActive = (path: string) => {
     if (path === '/dashboard') {
       return location.pathname === '/dashboard';
     }
     return location.pathname.startsWith(path);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   return (
@@ -48,7 +54,12 @@ export const UserSidebar = () => {
               <User className="w-5 h-5 text-gray-600" />
             </div>
             <div>
-              <p className="font-medium text-gray-900">John Doe</p>
+              <p className="font-medium text-gray-900">
+                {profile?.first_name && profile?.last_name 
+                  ? `${profile.first_name} ${profile.last_name}`
+                  : profile?.email || 'User'
+                }
+              </p>
               <p className="text-sm text-gray-500">Premium Member</p>
             </div>
           </div>
@@ -75,31 +86,31 @@ export const UserSidebar = () => {
           })}
         </nav>
 
-        {/* Admin Panel Link */}
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-gray-700 hover:bg-gray-100"
-            asChild
-          >
-            <Link to="/admin">
-              <Shield className="w-5 h-5 mr-3" />
-              Admin Panel
-            </Link>
-          </Button>
-        </div>
+        {/* Admin Panel Link (only for admins) */}
+        {profile?.role === 'admin' && (
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-gray-700 hover:bg-gray-100"
+              asChild
+            >
+              <Link to="/admin">
+                <Shield className="w-5 h-5 mr-3" />
+                Admin Panel
+              </Link>
+            </Button>
+          </div>
+        )}
 
         {/* Logout Button */}
         <div className="mt-4 pt-4 border-t border-gray-200">
           <Button 
             variant="ghost" 
             className="w-full justify-start text-gray-700 hover:bg-gray-100"
-            asChild
+            onClick={handleSignOut}
           >
-            <Link to="/login">
-              <LogOut className="w-5 h-5 mr-3" />
-              Sign Out
-            </Link>
+            <LogOut className="w-5 h-5 mr-3" />
+            Sign Out
           </Button>
         </div>
       </div>
