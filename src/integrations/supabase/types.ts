@@ -14,6 +14,160 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_forms: {
+        Row: {
+          booking_id: string
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          customer_signature: string | null
+          damages: Json | null
+          form_type: string
+          fuel_level: number | null
+          id: string
+          inspector_notes: string | null
+          inspector_signature: string | null
+          mileage_reading: number | null
+          photos: Json | null
+          vehicle_condition: Json | null
+        }
+        Insert: {
+          booking_id: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          customer_signature?: string | null
+          damages?: Json | null
+          form_type: string
+          fuel_level?: number | null
+          id?: string
+          inspector_notes?: string | null
+          inspector_signature?: string | null
+          mileage_reading?: number | null
+          photos?: Json | null
+          vehicle_condition?: Json | null
+        }
+        Update: {
+          booking_id?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          customer_signature?: string | null
+          damages?: Json | null
+          form_type?: string
+          fuel_level?: number | null
+          id?: string
+          inspector_notes?: string | null
+          inspector_signature?: string | null
+          mileage_reading?: number | null
+          photos?: Json | null
+          vehicle_condition?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_forms_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_forms_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          booking_type: string
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          daily_rate: number
+          dropoff_location: string
+          duration_days: number
+          end_date: string
+          end_time: string | null
+          id: string
+          notes: string | null
+          pending_expires_at: string | null
+          pickup_location: string
+          start_date: string
+          start_time: string | null
+          status: Database["public"]["Enums"]["booking_status"]
+          total_amount: number
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          booking_type?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          daily_rate: number
+          dropoff_location: string
+          duration_days: number
+          end_date: string
+          end_time?: string | null
+          id?: string
+          notes?: string | null
+          pending_expires_at?: string | null
+          pickup_location: string
+          start_date: string
+          start_time?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          total_amount: number
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          booking_type?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          daily_rate?: number
+          dropoff_location?: string
+          duration_days?: number
+          end_date?: string
+          end_time?: string | null
+          id?: string
+          notes?: string | null
+          pending_expires_at?: string | null
+          pickup_location?: string
+          start_date?: string
+          start_time?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          total_amount?: number
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_documents: {
         Row: {
           created_at: string
@@ -257,6 +411,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_booking_total: {
+        Args: { p_daily_rate: number; p_start_date: string; p_end_date: string }
+        Returns: number
+      }
+      cancel_expired_pending_bookings: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      check_vehicle_availability: {
+        Args: {
+          p_vehicle_id: string
+          p_start_date: string
+          p_end_date: string
+          p_exclude_booking_id?: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _user_id: string
@@ -267,6 +438,12 @@ export type Database = {
     }
     Enums: {
       app_role: "customer" | "admin"
+      booking_status:
+        | "pending"
+        | "confirmed"
+        | "active"
+        | "completed"
+        | "canceled"
       fuel_type: "gasoline" | "diesel" | "electric" | "hybrid"
       transmission_type: "manual" | "automatic"
       vehicle_status: "active" | "rented" | "maintenance" | "inactive"
@@ -398,6 +575,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["customer", "admin"],
+      booking_status: [
+        "pending",
+        "confirmed",
+        "active",
+        "completed",
+        "canceled",
+      ],
       fuel_type: ["gasoline", "diesel", "electric", "hybrid"],
       transmission_type: ["manual", "automatic"],
       vehicle_status: ["active", "rented", "maintenance", "inactive"],
