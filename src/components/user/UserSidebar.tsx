@@ -8,7 +8,8 @@ import {
   CreditCard, 
   User, 
   Car,
-  LogOut 
+  LogOut,
+  Shield 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -74,8 +75,22 @@ export const UserSidebar = () => {
           })}
         </nav>
 
+        {/* Admin Panel Link */}
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-gray-700 hover:bg-gray-100"
+            asChild
+          >
+            <Link to="/admin">
+              <Shield className="w-5 h-5 mr-3" />
+              Admin Panel
+            </Link>
+          </Button>
+        </div>
+
         {/* Logout Button */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
+        <div className="mt-4 pt-4 border-t border-gray-200">
           <Button 
             variant="ghost" 
             className="w-full justify-start text-gray-700 hover:bg-gray-100"

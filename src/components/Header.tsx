@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Car, Menu, X, User } from 'lucide-react';
+import { Car, Menu, X, User, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Header = () => {
@@ -49,7 +49,13 @@ const Header = () => {
             <Button asChild variant="ghost" className="rounded-full">
               <Link to="/dashboard">
                 <User className="w-4 h-4 mr-2" />
-                Dashboard
+                Customer Dashboard
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="rounded-full">
+              <Link to="/admin">
+                <Shield className="w-4 h-4 mr-2" />
+                Admin Panel
               </Link>
             </Button>
             <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white rounded-full">
@@ -90,7 +96,13 @@ const Header = () => {
                 <Button asChild variant="ghost" className="w-full justify-start rounded-full">
                   <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
                     <User className="w-4 h-4 mr-2" />
-                    Dashboard
+                    Customer Dashboard
+                  </Link>
+                </Button>
+                <Button asChild variant="ghost" className="w-full justify-start rounded-full">
+                  <Link to="/admin" onClick={() => setIsMenuOpen(false)}>
+                    <Shield className="w-4 h-4 mr-2" />
+                    Admin Panel
                   </Link>
                 </Button>
                 <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full">

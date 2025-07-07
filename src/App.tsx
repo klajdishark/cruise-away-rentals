@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Cars from "./pages/Cars";
 import Booking from "./pages/Booking";
 import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import Login from "./pages/Login";
 import HowItWorks from "./pages/HowItWorks";
 import Contact from "./pages/Contact";
@@ -26,7 +27,8 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/cars" element={<Cars />} />
           <Route path="/booking/:carId" element={<Booking />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/*" element={<Dashboard />} />
+          <Route path="/admin/*" element={<AdminDashboard />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/contact" element={<Contact />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

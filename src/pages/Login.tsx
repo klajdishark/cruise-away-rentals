@@ -5,17 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Car } from 'lucide-react';
+import { Car, User, Shield } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [userType, setUserType] = useState<'user' | 'admin'>('user');
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // For now, just redirect to dashboard without any validation
-    navigate('/dashboard');
+    // For now, redirect based on selected user type
+    if (userType === 'admin') {
+      navigate('/admin');
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   return (
@@ -27,17 +32,42 @@ const Login = () => {
               <Car className="w-6 h-6 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">RentEasy Admin</CardTitle>
-          <CardDescription>Sign in to access the admin dashboard</CardDescription>
+          <CardTitle className="text-2xl font-bold">RentEasy Login</CardTitle>
+          <CardDescription>Sign in to access your account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* User Type Selection */}
+            <div className="space-y-3">
+              <Label>Account Type</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant={userType === 'user' ? 'default' : 'outline'}
+                  className="flex items-center justify-center space-x-2"
+                  onClick={() => setUserType('user')}
+                >
+                  <User className="w-4 h-4" />
+                  <span>Customer</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant={userType === 'admin' ? 'default' : 'outline'}
+                  className="flex items-center justify-center space-x-2"
+                  onClick={() => setUserType('admin')}
+                >
+                  <Shield className="w-4 h-4" />
+                  <span>Admin</span>
+                </Button>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@renteasy.com"
+                placeholder={userType === 'admin' ? 'admin@renteasy.com' : 'customer@example.com'}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -55,7 +85,7 @@ const Login = () => {
               />
             </div>
             <Button type="submit" className="w-full">
-              Sign In
+              Sign In as {userType === 'admin' ? 'Admin' : 'Customer'}
             </Button>
           </form>
         </CardContent>
