@@ -7,7 +7,8 @@ import {
   Users, 
   CreditCard, 
   BarChart3, 
-  Settings 
+  Settings,
+  LogOut 
 } from 'lucide-react';
 import {
   Sidebar,
@@ -18,7 +19,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
 } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 import { AdminView } from '@/pages/AdminDashboard';
 
 interface AdminSidebarProps {
@@ -37,6 +41,12 @@ const menuItems = [
 ] as const;
 
 export const AdminSidebar = ({ currentView, onViewChange }: AdminSidebarProps) => {
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <Sidebar className="w-64 border-r">
       <SidebarHeader>
@@ -68,6 +78,19 @@ export const AdminSidebar = ({ currentView, onViewChange }: AdminSidebarProps) =
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <div className="p-4">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-gray-700 hover:bg-gray-100"
+            onClick={handleSignOut}
+          >
+            <LogOut className="w-4 h-4 mr-3" />
+            Sign Out
+          </Button>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 };
