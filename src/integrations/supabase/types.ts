@@ -69,7 +69,7 @@ export type Database = {
         Row: {
           created_at: string
           date_of_birth: string | null
-          email: string
+          email: string | null
           id: string
           license_expiry: string
           license_number: string
@@ -86,7 +86,7 @@ export type Database = {
         Insert: {
           created_at?: string
           date_of_birth?: string | null
-          email: string
+          email?: string | null
           id?: string
           license_expiry: string
           license_number: string
@@ -103,7 +103,7 @@ export type Database = {
         Update: {
           created_at?: string
           date_of_birth?: string | null
-          email?: string
+          email?: string | null
           id?: string
           license_expiry?: string
           license_number?: string

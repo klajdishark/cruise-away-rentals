@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,7 +11,7 @@ import { Tables } from '@/integrations/supabase/types';
 
 const customerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
   phone: z.string().min(10, 'Phone number must be at least 10 characters'),
   date_of_birth: z.string().optional(),
   license_number: z.string().min(5, 'License number must be at least 5 characters'),
@@ -74,7 +73,7 @@ export const CustomerForm = ({ customer, onSubmit, onCancel }: CustomerFormProps
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email Address</FormLabel>
+                <FormLabel>Email Address (Optional)</FormLabel>
                 <FormControl>
                   <Input type="email" placeholder="Enter email address" {...field} />
                 </FormControl>
