@@ -133,7 +133,7 @@ export const useAnalytics = () => {
   // Booking patterns - using direct SQL query to access the view
   const { data: bookingPatterns, isLoading: patternsLoading } = useQuery({
     queryKey: ['booking-patterns'],
-    queryFn: async (): Promise<BookingPattern[]> => {
+    queryFn: async (): Promise<any> => {
       const { data, error } = await supabase
         .from('booking_patterns' as any)
         .select('*')
