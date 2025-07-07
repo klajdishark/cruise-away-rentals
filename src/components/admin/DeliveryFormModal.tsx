@@ -19,15 +19,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Car, Clock, User, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
+import { ImageGallery } from './ImageGallery';
+import { useVehicles } from '@/hooks/useVehicles';
 
 const deliveryFormSchema = z.object({
   mileage_reading: z.number().min(0, 'Mileage must be a positive number'),
   fuel_level: z.number().min(0).max(100, 'Fuel level must be between 0 and 100'),
-  vehicle_condition: z.string().optional(),
   damages: z.string().optional(),
   inspector_notes: z.string().optional(),
   inspector_signature: z.string().min(1, 'Inspector signature is required'),
-  customer_signature: z.string().min(1, 'Customer signature is required'),
+  customer_signature: z.string().optional(),
 });
 
 type DeliveryFormData = z.infer<typeof deliveryFormSchema>;
@@ -42,13 +43,17 @@ interface DeliveryFormModalProps {
 
 export const DeliveryFormModal = ({ isOpen, onClose, booking, deliveryForm, onSubmit }: DeliveryFormModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [inspectionImages, setInspectionImages] = useState<string[]>(
+    deliveryForm?.photos ? (Array.isArray(deliveryForm.photos) ? deliveryForm.photos : []) : []
+  );
+
+  const { updateVehicle } = useVehicles();
 
   const form = useForm<DeliveryFormData>({
     resolver: zodResolver(deliveryFormSchema),
     defaultValues: {
       mileage_reading: deliveryForm?.mileage_reading || 0,
       fuel_level: deliveryForm?.fuel_level || 100,
-      vehicle_condition: deliveryForm?.vehicle_condition ? JSON.stringify(deliveryForm.vehicle_condition) : '',
       damages: deliveryForm?.damages ? JSON.stringify(deliveryForm.damages) : '',
       inspector_notes: deliveryForm?.inspector_notes || '',
       inspector_signature: deliveryForm?.inspector_signature || '',
@@ -59,10 +64,18 @@ export const DeliveryFormModal = ({ isOpen, onClose, booking, deliveryForm, onSu
   const handleSubmit = async (data: DeliveryFormData) => {
     setIsSubmitting(true);
     try {
+      // Update vehicle mileage if provided
+      if (data.mileage_reading && booking?.vehicle_id) {
+        await updateVehicle({
+          id: booking.vehicle_id,
+          mileage: data.mileage_reading
+        });
+      }
+
       const formData = {
         ...data,
-        vehicle_condition: data.vehicle_condition ? JSON.parse(data.vehicle_condition) : null,
         damages: data.damages ? JSON.parse(data.damages) : null,
+        photos: inspectionImages,
         completed_at: new Date().toISOString(),
         completed_by: 'current_user_id', // This should be replaced with actual user ID
       };
@@ -189,24 +202,6 @@ export const DeliveryFormModal = ({ isOpen, onClose, booking, deliveryForm, onSu
 
             <FormField
               control={form.control}
-              name="vehicle_condition"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Vehicle Condition Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Document the overall condition of the vehicle (JSON format for detailed inspection)"
-                      className="min-h-[100px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="damages"
               render={({ field }) => (
                 <FormItem>
@@ -241,6 +236,22 @@ export const DeliveryFormModal = ({ isOpen, onClose, booking, deliveryForm, onSu
               )}
             />
 
+            {/* Image Gallery for Inspection Photos */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium">Inspection Photos (Optional)</h3>
+                <p className="text-sm text-muted-foreground">
+                  Upload photos of the vehicle condition, damages, or any other relevant inspection details
+                </p>
+              </div>
+              <ImageGallery
+                images={inspectionImages}
+                onImagesChange={setInspectionImages}
+                maxImages={10}
+                maxFileSize={5}
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -264,10 +275,10 @@ export const DeliveryFormModal = ({ isOpen, onClose, booking, deliveryForm, onSu
                 name="customer_signature"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Customer Signature</FormLabel>
+                    <FormLabel>Customer Signature (Optional)</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Customer signature"
+                        placeholder="Customer signature (optional)"
                         {...field}
                       />
                     </FormControl>

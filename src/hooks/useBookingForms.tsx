@@ -8,21 +8,6 @@ export const useBookingForms = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch booking forms for a specific booking
-  const fetchBookingForms = async (bookingId: string) => {
-    const { data, error } = await supabase
-      .from('booking_forms')
-      .select('*')
-      .eq('booking_id', bookingId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      throw error;
-    }
-
-    return data;
-  };
-
   // Fetch all booking forms
   const {
     data: bookingForms = [],
@@ -58,10 +43,12 @@ export const useBookingForms = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
+        console.error('Error fetching booking forms:', error);
         throw error;
       }
 
-      return data;
+      console.log('Fetched booking forms:', data);
+      return data || [];
     }
   });
 
@@ -105,7 +92,9 @@ export const useBookingForms = () => {
 
   // Get delivery form for a booking
   const getDeliveryForm = (bookingId: string) => {
-    return bookingForms.find(form => form.booking_id === bookingId && form.form_type === 'delivery');
+    const form = bookingForms.find(form => form.booking_id === bookingId && form.form_type === 'delivery');
+    console.log(`Getting delivery form for booking ${bookingId}:`, form);
+    return form;
   };
 
   // Get pickup form for a booking
@@ -122,6 +111,5 @@ export const useBookingForms = () => {
     getBookingForms,
     getDeliveryForm,
     getPickupForm,
-    fetchBookingForms,
   };
 };
