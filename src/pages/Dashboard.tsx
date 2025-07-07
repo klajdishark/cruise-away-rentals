@@ -1,8 +1,9 @@
 
-import AdminDashboard from './AdminDashboard';
+import React from 'react';
+import { UserDashboard } from '@/components/user/UserDashboard';
 
 const Dashboard = () => {
-  return <AdminDashboard />;
+  return <UserDashboard />;
 };
 
 export default Dashboard;
