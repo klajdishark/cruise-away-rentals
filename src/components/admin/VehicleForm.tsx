@@ -1,12 +1,11 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import {
   Form,
   FormControl,
@@ -23,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ImageGallery } from './ImageGallery';
+import { Vehicle } from '@/hooks/useVehicles';
 
 const vehicleSchema = z.object({
   brand: z.string().min(1, 'Brand is required'),
@@ -33,30 +33,26 @@ const vehicleSchema = z.object({
   mileage: z.number().min(0, 'Mileage must be non-negative'),
   status: z.enum(['active', 'rented', 'maintenance', 'inactive']),
   description: z.string().optional(),
-  fuelType: z.enum(['gasoline', 'diesel', 'electric', 'hybrid']),
+  fuel_type: z.enum(['gasoline', 'diesel', 'electric', 'hybrid']),
   transmission: z.enum(['manual', 'automatic']),
   seats: z.number().min(1).max(15),
   color: z.string().min(1, 'Color is required'),
-  licensePlate: z.string().min(1, 'License plate is required'),
-  images: z.array(z.string()).optional(),
+  license_plate: z.string().min(1, 'License plate is required'),
 });
 
 type VehicleFormData = z.infer<typeof vehicleSchema>;
 
-interface Vehicle extends VehicleFormData {
-  id: number;
-  nextService: string;
-}
-
 interface VehicleFormProps {
   vehicle?: Vehicle;
-  onSubmit: (data: VehicleFormData) => void;
+  onSubmit: (data: VehicleFormData & { images?: string[] }) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
 
 export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false }: VehicleFormProps) => {
-  const [images, setImages] = useState<string[]>(vehicle?.images || []);
+  const [images, setImages] = useState<string[]>(
+    vehicle?.images?.map(img => img.image_url) || []
+  );
 
   const form = useForm<VehicleFormData>({
     resolver: zodResolver(vehicleSchema),
@@ -69,12 +65,11 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
       mileage: vehicle.mileage,
       status: vehicle.status,
       description: vehicle.description || '',
-      fuelType: vehicle.fuelType,
+      fuel_type: vehicle.fuel_type,
       transmission: vehicle.transmission,
       seats: vehicle.seats,
       color: vehicle.color,
-      licensePlate: vehicle.licensePlate,
-      images: vehicle.images || [],
+      license_plate: vehicle.license_plate,
     } : {
       brand: '',
       model: '',
@@ -84,12 +79,11 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
       mileage: 0,
       status: 'active',
       description: '',
-      fuelType: 'gasoline',
+      fuel_type: 'gasoline',
       transmission: 'automatic',
       seats: 5,
       color: '',
-      licensePlate: '',
-      images: [],
+      license_plate: '',
     },
   });
 
@@ -99,7 +93,6 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
 
   const handleImagesChange = (newImages: string[]) => {
     setImages(newImages);
-    form.setValue('images', newImages);
   };
 
   return (
@@ -242,7 +235,7 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
 
           <FormField
             control={form.control}
-            name="fuelType"
+            name="fuel_type"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Fuel Type</FormLabel>
@@ -321,7 +314,7 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
 
           <FormField
             control={form.control}
-            name="licensePlate"
+            name="license_plate"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>License Plate</FormLabel>
@@ -353,7 +346,7 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
         />
 
         <div className="space-y-4">
-          <Label>Vehicle Images</Label>
+          <FormLabel>Vehicle Images</FormLabel>
           <ImageGallery
             images={images}
             onImagesChange={handleImagesChange}

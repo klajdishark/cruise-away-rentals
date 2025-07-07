@@ -8,34 +8,17 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { VehicleForm } from './VehicleForm';
-
-interface Vehicle {
-  id: number;
-  brand: string;
-  model: string;
-  year: number;
-  status: 'active' | 'rented' | 'maintenance' | 'inactive';
-  price: number;
-  location: string;
-  mileage: number;
-  nextService: string;
-  description?: string;
-  fuelType: 'gasoline' | 'diesel' | 'electric' | 'hybrid';
-  transmission: 'manual' | 'automatic';
-  seats: number;
-  color: string;
-  licensePlate: string;
-  images?: string[];
-}
+import { Vehicle } from '@/hooks/useVehicles';
 
 interface VehicleModalProps {
   isOpen: boolean;
   onClose: () => void;
   vehicle?: Vehicle;
   onSubmit: (data: any) => void;
+  isSubmitting?: boolean;
 }
 
-export const VehicleModal = ({ isOpen, onClose, vehicle, onSubmit }: VehicleModalProps) => {
+export const VehicleModal = ({ isOpen, onClose, vehicle, onSubmit, isSubmitting = false }: VehicleModalProps) => {
   const handleSubmit = (data: any) => {
     onSubmit(data);
     onClose();
@@ -60,6 +43,7 @@ export const VehicleModal = ({ isOpen, onClose, vehicle, onSubmit }: VehicleModa
           vehicle={vehicle}
           onSubmit={handleSubmit}
           onCancel={onClose}
+          isSubmitting={isSubmitting}
         />
       </DialogContent>
     </Dialog>
