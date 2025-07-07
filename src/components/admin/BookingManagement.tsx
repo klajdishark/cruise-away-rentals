@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,6 +53,7 @@ export const BookingManagement = () => {
   } = useBookings();
 
   const {
+    bookingForms,
     getDeliveryForm,
     updateBookingForm,
     isUpdating: isUpdatingForm
@@ -66,6 +68,11 @@ export const BookingManagement = () => {
   const [viewMode, setViewMode] = useState('table');
   const [isDeliveryFormOpen, setIsDeliveryFormOpen] = useState(false);
   const [selectedDeliveryBooking, setSelectedDeliveryBooking] = useState<any | null>(null);
+
+  // Debug logging to help identify issues
+  console.log('Booking forms loaded:', bookingForms);
+  console.log('Total bookings:', bookings.length);
+  console.log('Completed bookings:', bookings.filter(b => b.status === 'completed').length);
 
   const filteredBookings = bookings.filter(booking => {
     const customerName = booking.customers?.name || '';
@@ -92,6 +99,7 @@ export const BookingManagement = () => {
   };
 
   const handleOpenDeliveryForm = (booking: any) => {
+    console.log('Opening delivery form for booking:', booking.id);
     setSelectedDeliveryBooking(booking);
     setIsDeliveryFormOpen(true);
   };
@@ -263,6 +271,14 @@ export const BookingManagement = () => {
                 const deliveryForm = getDeliveryForm(booking.id);
                 const hasDeliveryForm = !!deliveryForm;
                 const isDeliveryFormCompleted = deliveryForm?.completed_at;
+                
+                // Debug logging for each booking
+                console.log(`Booking ${booking.id}:`, {
+                  status: booking.status,
+                  hasDeliveryForm,
+                  isDeliveryFormCompleted,
+                  deliveryForm
+                });
 
                 return (
                   <TableRow key={booking.id}>
@@ -338,13 +354,15 @@ export const BookingManagement = () => {
                             </Button>
                           </>
                         )}
-                        {booking.status === 'completed' && hasDeliveryForm && (
+                        {/* This is the delivery form button - it should show for completed bookings */}
+                        {booking.status === 'completed' && (
                           <Button
                             variant="outline"
                             size="sm"
                             className="text-blue-600"
                             onClick={() => handleOpenDeliveryForm(booking)}
                             disabled={isUpdatingForm}
+                            title={hasDeliveryForm ? 'View/Edit Delivery Form' : 'No delivery form available'}
                           >
                             <FileText className="w-4 h-4" />
                           </Button>
