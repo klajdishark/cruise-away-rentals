@@ -1,19 +1,23 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, Clock, MapPin, CreditCard, User, Car } from 'lucide-react';
+import { Calendar, Clock, MapPin, CreditCard, User, Car, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import Header from '@/components/Header';
 import { toast } from '@/hooks/use-toast';
+import { useVehicleAvailability } from '@/hooks/useVehicleAvailability';
 
 const Booking = () => {
   const { carId } = useParams();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
+  const { checkAvailability, isChecking } = useVehicleAvailability();
+  const [isVehicleAvailable, setIsVehicleAvailable] = useState(true);
+  const [availabilityMessage, setAvailabilityMessage] = useState('');
 
   // Mock car data (in real app, fetch by carId)
   const car = {
@@ -49,6 +53,34 @@ const Booking = () => {
     }));
   };
 
+  // Check availability when dates change
+  useEffect(() => {
+    const performAvailabilityCheck = async () => {
+      if (carId && bookingData.pickupDate && bookingData.returnDate) {
+        const isAvailable = await checkAvailability({
+          vehicleId: carId,
+          startDate: bookingData.pickupDate,
+          endDate: bookingData.returnDate
+        });
+
+        setIsVehicleAvailable(isAvailable);
+        
+        if (!isAvailable) {
+          setAvailabilityMessage(
+            `${car.name} is not available from ${bookingData.pickupDate} to ${bookingData.returnDate}. Please select different dates.`
+          );
+        } else {
+          setAvailabilityMessage('');
+        }
+      } else {
+        setIsVehicleAvailable(true);
+        setAvailabilityMessage('');
+      }
+    };
+
+    performAvailabilityCheck();
+  }, [carId, bookingData.pickupDate, bookingData.returnDate, checkAvailability, car.name]);
+
   const calculateTotalPrice = () => {
     if (!bookingData.pickupDate || !bookingData.returnDate) return car.price;
     
@@ -61,6 +93,16 @@ const Booking = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isVehicleAvailable) {
+      toast({
+        variant: "destructive",
+        title: "Vehicle Not Available",
+        description: availabilityMessage,
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
     // Simulate payment processing
@@ -89,6 +131,14 @@ const Booking = () => {
             {/* Booking Form */}
             <div className="lg:col-span-2">
               <form onSubmit={handleSubmit} className="space-y-8">
+                {/* Availability Alert */}
+                {!isVehicleAvailable && availabilityMessage && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>{availabilityMessage}</AlertDescription>
+                  </Alert>
+                )}
+
                 {/* Rental Details */}
                 <Card className="border-0 shadow-lg rounded-3xl">
                   <CardHeader>
@@ -323,25 +373,30 @@ const Booking = () => {
                     </div>
 
                     {/* Payment Button */}
-                    <Button
-                      type="submit"
-                      form="booking-form"
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full py-6 text-lg font-semibold"
-                      disabled={isProcessing}
-                      onClick={handleSubmit}
-                    >
-                      {isProcessing ? (
-                        <div className="flex items-center">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Processing...
-                        </div>
-                      ) : (
-                        <div className="flex items-center">
-                          <CreditCard className="w-5 h-5 mr-2" />
-                          Pay with PayPal
-                        </div>
-                      )}
-                    </Button>
+                    <div className="lg:col-span-2">
+                      <Button
+                        type="submit"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full py-6 text-lg font-semibold"
+                        disabled={isProcessing || !isVehicleAvailable || isChecking}
+                      >
+                        {isProcessing ? (
+                          <div className="flex items-center">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Processing...
+                          </div>
+                        ) : isChecking ? (
+                          <div className="flex items-center">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Checking availability...  
+                          </div>
+                        ) : (
+                          <div className="flex items-center">
+                            <CreditCard className="w-5 h-5 mr-2" />
+                            Pay with PayPal
+                          </div>
+                        )}
+                      </Button>
+                    </div>
 
                     <p className="text-xs text-gray-500 text-center">
                       Secure payment powered by PayPal. Your payment information is encrypted and secure.

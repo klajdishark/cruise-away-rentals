@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -7,8 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useVehicles } from '@/hooks/useVehicles';
+import { useVehicleAvailability } from '@/hooks/useVehicleAvailability';
 import { Tables } from '@/integrations/supabase/types';
 
 const bookingSchema = z.object({
@@ -38,6 +42,10 @@ interface BookingFormProps {
 export const BookingForm = ({ booking, onSubmit, onCancel }: BookingFormProps) => {
   const { customers, isLoading: customersLoading } = useCustomers();
   const { vehicles, loading: vehiclesLoading } = useVehicles();
+  const { checkAvailability, isChecking } = useVehicleAvailability();
+  
+  const [isVehicleAvailable, setIsVehicleAvailable] = useState(true);
+  const [availabilityMessage, setAvailabilityMessage] = useState('');
 
   const form = useForm<BookingFormData>({
     resolver: zodResolver(bookingSchema),
@@ -57,8 +65,12 @@ export const BookingForm = ({ booking, onSubmit, onCancel }: BookingFormProps) =
     },
   });
 
-  // Auto-fill daily rate when vehicle is selected
+  // Watch for changes in vehicle, start date, and end date
   const selectedVehicleId = form.watch('vehicle_id');
+  const startDate = form.watch('start_date');
+  const endDate = form.watch('end_date');
+
+  // Auto-fill daily rate when vehicle is selected
   useEffect(() => {
     if (selectedVehicleId && vehicles.length > 0) {
       const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
@@ -68,7 +80,41 @@ export const BookingForm = ({ booking, onSubmit, onCancel }: BookingFormProps) =
     }
   }, [selectedVehicleId, vehicles, form]);
 
+  // Check availability when vehicle or dates change
+  useEffect(() => {
+    const performAvailabilityCheck = async () => {
+      if (selectedVehicleId && startDate && endDate) {
+        const isAvailable = await checkAvailability({
+          vehicleId: selectedVehicleId,
+          startDate,
+          endDate,
+          excludeBookingId: booking?.id // Exclude current booking when editing
+        });
+
+        setIsVehicleAvailable(isAvailable);
+        
+        if (!isAvailable) {
+          const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
+          const vehicleName = selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.model}` : 'Selected vehicle';
+          setAvailabilityMessage(
+            `${vehicleName} is not available from ${startDate} to ${endDate}. Please select different dates or choose another vehicle.`
+          );
+        } else {
+          setAvailabilityMessage('');
+        }
+      } else {
+        setIsVehicleAvailable(true);
+        setAvailabilityMessage('');
+      }
+    };
+
+    performAvailabilityCheck();
+  }, [selectedVehicleId, startDate, endDate, checkAvailability, vehicles, booking?.id]);
+
   const handleSubmit = (data: BookingFormData) => {
+    if (!isVehicleAvailable) {
+      return; // Prevent submission if vehicle is not available
+    }
     onSubmit(data);
   };
 
@@ -79,6 +125,14 @@ export const BookingForm = ({ booking, onSubmit, onCancel }: BookingFormProps) =
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        {/* Availability Alert */}
+        {!isVehicleAvailable && availabilityMessage && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{availabilityMessage}</AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -304,8 +358,11 @@ export const BookingForm = ({ booking, onSubmit, onCancel }: BookingFormProps) =
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit">
-            {booking ? 'Update Booking' : 'Create Booking'}
+          <Button 
+            type="submit" 
+            disabled={!isVehicleAvailable || isChecking}
+          >
+            {isChecking ? 'Checking availability...' : booking ? 'Update Booking' : 'Create Booking'}
           </Button>
         </div>
       </form>
