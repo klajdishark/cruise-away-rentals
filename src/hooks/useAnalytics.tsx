@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 interface DashboardMetrics {
@@ -68,12 +68,13 @@ interface VehicleCategoryPerformance {
 }
 
 export const useAnalytics = () => {
-  // Dashboard metrics - using direct SQL query since the function isn't in types yet
+  const queryClient = useQueryClient();
+
+  // Dashboard metrics - using RPC function
   const { data: dashboardMetrics, isLoading: dashboardLoading } = useQuery({
     queryKey: ['analytics-dashboard'],
     queryFn: async (): Promise<DashboardMetrics> => {
-      const { data, error } = await supabase
-        .rpc('get_analytics_dashboard' as any);
+      const { data, error } = await supabase.rpc('get_analytics_dashboard');
       
       if (error) {
         console.error('Error fetching dashboard metrics:', error);
@@ -85,12 +86,12 @@ export const useAnalytics = () => {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  // Monthly analytics - using direct SQL query to access the view
+  // Monthly analytics - using database view
   const { data: monthlyAnalytics, isLoading: monthlyLoading } = useQuery({
     queryKey: ['monthly-analytics'],
     queryFn: async (): Promise<MonthlyAnalytics[]> => {
       const { data, error } = await supabase
-        .from('monthly_analytics' as any)
+        .from('monthly_analytics')
         .select('*')
         .order('month', { ascending: false })
         .limit(12);
@@ -111,12 +112,12 @@ export const useAnalytics = () => {
     refetchInterval: 60000, // Refresh every minute
   });
 
-  // Vehicle utilization - using direct SQL query to access the view
+  // Vehicle utilization - using database view
   const { data: vehicleUtilization, isLoading: utilizationLoading } = useQuery({
     queryKey: ['vehicle-utilization'],
-    queryFn: async (): Promise<any> => {
+    queryFn: async (): Promise<VehicleUtilization[]> => {
       const { data, error } = await supabase
-        .from('vehicle_utilization_analytics' as any)
+        .from('vehicle_utilization_analytics')
         .select('*')
         .order('utilization_percentage', { ascending: false });
       
@@ -130,12 +131,12 @@ export const useAnalytics = () => {
     refetchInterval: 60000,
   });
 
-  // Booking patterns - using direct SQL query to access the view
+  // Booking patterns - using database view
   const { data: bookingPatterns, isLoading: patternsLoading } = useQuery({
     queryKey: ['booking-patterns'],
-    queryFn: async (): Promise<any> => {
+    queryFn: async (): Promise<BookingPattern[]> => {
       const { data, error } = await supabase
-        .from('booking_patterns' as any)
+        .from('booking_patterns')
         .select('*')
         .order('pattern_type, pattern_key');
       
@@ -149,12 +150,11 @@ export const useAnalytics = () => {
     refetchInterval: 300000, // Refresh every 5 minutes
   });
 
-  // Vehicle category performance - using direct SQL query
+  // Vehicle category performance - using RPC function
   const { data: categoryPerformance, isLoading: categoryLoading } = useQuery({
     queryKey: ['vehicle-category-performance'],
     queryFn: async (): Promise<VehicleCategoryPerformance[]> => {
-      const { data, error } = await supabase
-        .rpc('get_vehicle_category_performance' as any);
+      const { data, error } = await supabase.rpc('get_vehicle_category_performance');
       
       if (error) {
         console.error('Error fetching category performance:', error);
@@ -166,7 +166,7 @@ export const useAnalytics = () => {
     refetchInterval: 300000,
   });
 
-  // Set up real-time subscriptions
+  // Set up real-time subscriptions for data changes
   useEffect(() => {
     const channel = supabase
       .channel('analytics-changes')
@@ -174,8 +174,13 @@ export const useAnalytics = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'bookings' },
         () => {
-          // Invalidate analytics queries when bookings change
           console.log('Bookings changed, refreshing analytics...');
+          // Invalidate all analytics queries
+          queryClient.invalidateQueries({ queryKey: ['analytics-dashboard'] });
+          queryClient.invalidateQueries({ queryKey: ['monthly-analytics'] });
+          queryClient.invalidateQueries({ queryKey: ['vehicle-utilization'] });
+          queryClient.invalidateQueries({ queryKey: ['booking-patterns'] });
+          queryClient.invalidateQueries({ queryKey: ['vehicle-category-performance'] });
         }
       )
       .on(
@@ -183,6 +188,8 @@ export const useAnalytics = () => {
         { event: '*', schema: 'public', table: 'customers' },
         () => {
           console.log('Customers changed, refreshing analytics...');
+          queryClient.invalidateQueries({ queryKey: ['analytics-dashboard'] });
+          queryClient.invalidateQueries({ queryKey: ['monthly-analytics'] });
         }
       )
       .on(
@@ -190,6 +197,9 @@ export const useAnalytics = () => {
         { event: '*', schema: 'public', table: 'vehicles' },
         () => {
           console.log('Vehicles changed, refreshing analytics...');
+          queryClient.invalidateQueries({ queryKey: ['analytics-dashboard'] });
+          queryClient.invalidateQueries({ queryKey: ['vehicle-utilization'] });
+          queryClient.invalidateQueries({ queryKey: ['vehicle-category-performance'] });
         }
       )
       .subscribe();
@@ -197,7 +207,7 @@ export const useAnalytics = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [queryClient]);
 
   return {
     dashboardMetrics,
