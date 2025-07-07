@@ -5,44 +5,62 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { Download, Calendar, TrendingUp, Users, Car, DollarSign } from 'lucide-react';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
-const revenueData = [
-  { month: 'Jan', revenue: 45000, bookings: 120 },
-  { month: 'Feb', revenue: 52000, bookings: 135 },
-  { month: 'Mar', revenue: 48000, bookings: 128 },
-  { month: 'Apr', revenue: 61000, bookings: 158 },
-  { month: 'May', revenue: 55000, bookings: 142 },
-  { month: 'Jun', revenue: 67000, bookings: 165 },
-];
-
-const vehicleUtilization = [
-  { category: 'Economy', utilization: 85, count: 45 },
-  { category: 'Compact', utilization: 78, count: 32 },
-  { category: 'Mid-size', utilization: 72, count: 28 },
-  { category: 'Full-size', utilization: 68, count: 15 },
-  { category: 'Luxury', utilization: 58, count: 12 },
-  { category: 'SUV', utilization: 82, count: 25 },
-];
-
-const customerSegmentation = [
-  { name: 'New Customers', value: 35, color: '#3b82f6' },
-  { name: 'Returning Customers', value: 45, color: '#10b981' },
-  { name: 'VIP Customers', value: 20, color: '#8b5cf6' },
-];
-
-const peakHours = [
-  { hour: '6 AM', bookings: 12 },
-  { hour: '8 AM', bookings: 25 },
-  { hour: '10 AM', bookings: 45 },
-  { hour: '12 PM', bookings: 38 },
-  { hour: '2 PM', bookings: 52 },
-  { hour: '4 PM', bookings: 48 },
-  { hour: '6 PM', bookings: 35 },
-  { hour: '8 PM', bookings: 22 },
-];
+const COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
 
 export const ReportsAnalytics = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('6months');
+  const { 
+    dashboardMetrics, 
+    monthlyAnalytics, 
+    vehicleUtilization, 
+    bookingPatterns, 
+    categoryPerformance,
+    isLoading 
+  } = useAnalytics();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Reports & Analytics</h1>
+            <p className="text-muted-foreground">Loading business insights and performance metrics...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Process booking patterns for charts
+  const peakHours = bookingPatterns
+    ?.filter(p => p.pattern_type === 'hourly')
+    .map(p => ({
+      hour: p.pattern_label,
+      bookings: p.total_bookings
+    })) || [];
+
+  const dailyPatterns = bookingPatterns
+    ?.filter(p => p.pattern_type === 'daily')
+    .map(p => ({
+      day: p.pattern_label,
+      bookings: p.total_bookings
+    })) || [];
+
+  // Process monthly analytics for charts
+  const revenueData = monthlyAnalytics?.slice(0, 6).reverse().map(item => ({
+    month: item.month,
+    revenue: parseFloat(item.revenue.toString()),
+    bookings: item.total_bookings
+  })) || [];
+
+  // Process category performance for pie chart
+  const customerSegmentation = categoryPerformance?.slice(0, 3).map((cat, index) => ({
+    name: cat.category,
+    value: parseFloat(cat.total_revenue.toString()),
+    color: COLORS[index]
+  })) || [];
 
   return (
     <div className="space-y-6">
@@ -71,9 +89,11 @@ export const ReportsAnalytics = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$328,000</div>
+            <div className="text-2xl font-bold">
+              ${dashboardMetrics?.revenue.yearly?.toLocaleString() || '0'}
+            </div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">+15%</span> vs last period
+              ${dashboardMetrics?.revenue.monthly?.toLocaleString() || '0'} this month
             </p>
           </CardContent>
         </Card>
@@ -84,22 +104,26 @@ export const ReportsAnalytics = () => {
             <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">74%</div>
+            <div className="text-2xl font-bold">
+              {dashboardMetrics?.fleet.utilization?.toFixed(1) || '0'}%
+            </div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">+3%</span> from last month
+              {dashboardMetrics?.fleet.rented || 0} of {dashboardMetrics?.fleet.total || 0} vehicles rented
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Customer Retention</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Bookings</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">68%</div>
+            <div className="text-2xl font-bold">
+              {dashboardMetrics?.bookings.active || 0}
+            </div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">+8%</span> improvement
+              {dashboardMetrics?.bookings.monthly || 0} bookings this month
             </p>
           </CardContent>
         </Card>
@@ -110,9 +134,11 @@ export const ReportsAnalytics = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$248</div>
+            <div className="text-2xl font-bold">
+              ${dashboardMetrics?.performance.avg_booking_value?.toFixed(0) || '0'}
+            </div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">+12%</span> vs last period
+              {dashboardMetrics?.customers.new || 0} new customers this month
             </p>
           </CardContent>
         </Card>
@@ -131,7 +157,7 @@ export const ReportsAnalytics = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip />
+                <Tooltip formatter={(value) => [`$${value?.toLocaleString()}`, 'Revenue']} />
                 <Bar dataKey="revenue" fill="#3b82f6" />
               </BarChart>
             </ResponsiveContainer>
@@ -166,20 +192,20 @@ export const ReportsAnalytics = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {vehicleUtilization.map((item) => (
+              {categoryPerformance?.slice(0, 6).map((item, index) => (
                 <div key={item.category} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="text-sm font-medium">{item.category}</div>
-                    <Badge variant="secondary">{item.count} vehicles</Badge>
+                    <Badge variant="secondary">{item.vehicle_count} vehicles</Badge>
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-24 bg-gray-200 rounded-full h-2">
                       <div 
                         className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${item.utilization}%` }}
+                        style={{ width: `${Math.min(item.avg_utilization, 100)}%` }}
                       ></div>
                     </div>
-                    <div className="text-sm font-medium">{item.utilization}%</div>
+                    <div className="text-sm font-medium">{item.avg_utilization.toFixed(1)}%</div>
                   </div>
                 </div>
               ))}
@@ -189,8 +215,8 @@ export const ReportsAnalytics = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Customer Segmentation</CardTitle>
-            <CardDescription>Breakdown of customer types</CardDescription>
+            <CardTitle>Revenue by Vehicle Category</CardTitle>
+            <CardDescription>Breakdown of revenue by vehicle type</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -202,13 +228,13 @@ export const ReportsAnalytics = () => {
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}%`}
+                  label={({ name, value }) => `${name}: $${value?.toLocaleString()}`}
                 >
                   {customerSegmentation.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value) => `$${value?.toLocaleString()}`} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -216,23 +242,25 @@ export const ReportsAnalytics = () => {
       </div>
 
       {/* Peak Hours Analysis */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Peak Booking Hours</CardTitle>
-          <CardDescription>Booking distribution throughout the day</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={peakHours}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="hour" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="bookings" fill="#8b5cf6" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      {peakHours.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Peak Booking Hours</CardTitle>
+            <CardDescription>Booking distribution throughout the day</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={peakHours}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="hour" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="bookings" fill="#8b5cf6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Stats */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -241,28 +269,36 @@ export const ReportsAnalytics = () => {
             <CardTitle className="text-lg">Cancellation Rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">8.2%</div>
-            <p className="text-xs text-muted-foreground">-2.3% from last month</p>
+            <div className="text-2xl font-bold text-red-600">
+              {dashboardMetrics?.performance.cancellation_rate?.toFixed(1) || '0'}%
+            </div>
+            <p className="text-xs text-muted-foreground">Last 30 days</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">No-Show Rate</CardTitle>
+            <CardTitle className="text-lg">Fleet Efficiency</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">3.1%</div>
-            <p className="text-xs text-muted-foreground">-0.8% from last month</p>
+            <div className="text-2xl font-bold text-green-600">
+              {vehicleUtilization?.length ? 
+                (vehicleUtilization.reduce((acc, v) => acc + v.utilization_percentage, 0) / vehicleUtilization.length).toFixed(1) 
+                : '0'}%
+            </div>
+            <p className="text-xs text-muted-foreground">Average utilization</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Customer Satisfaction</CardTitle>
+            <CardTitle className="text-lg">Customer Growth</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">4.6/5</div>
-            <p className="text-xs text-muted-foreground">+0.2 from last month</p>
+            <div className="text-2xl font-bold text-blue-600">
+              {dashboardMetrics?.customers.new || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">New customers this month</p>
           </CardContent>
         </Card>
       </div>
