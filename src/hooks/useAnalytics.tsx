@@ -114,7 +114,7 @@ export const useAnalytics = () => {
   // Vehicle utilization - using direct SQL query to access the view
   const { data: vehicleUtilization, isLoading: utilizationLoading } = useQuery({
     queryKey: ['vehicle-utilization'],
-    queryFn: async (): Promise<VehicleUtilization[]> => {
+    queryFn: async (): Promise<any> => {
       const { data, error } = await supabase
         .from('vehicle_utilization_analytics' as any)
         .select('*')
