@@ -1,14 +1,15 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calendar, CheckCircle, Clock, Edit, Eye, Filter, Grid, Plus, Search, Trash2, XCircle } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, Edit, Eye, Filter, Grid, Plus, Search, Trash2, XCircle, FileText } from 'lucide-react';
 import { BookingModal } from './BookingModal';
 import { CalendarView } from './CalendarView';
+import { DeliveryFormModal } from './DeliveryFormModal';
 import { useBookings } from '@/hooks/useBookings';
+import { useBookingForms } from '@/hooks/useBookingForms';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +51,12 @@ export const BookingManagement = () => {
     isDeleting
   } = useBookings();
 
+  const {
+    getDeliveryForm,
+    updateBookingForm,
+    isUpdating: isUpdatingForm
+  } = useBookingForms();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -57,6 +64,8 @@ export const BookingManagement = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [bookingToDelete, setBookingToDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState('table');
+  const [isDeliveryFormOpen, setIsDeliveryFormOpen] = useState(false);
+  const [selectedDeliveryBooking, setSelectedDeliveryBooking] = useState<any | null>(null);
 
   const filteredBookings = bookings.filter(booking => {
     const customerName = booking.customers?.name || '';
@@ -80,6 +89,18 @@ export const BookingManagement = () => {
   const handleDeleteBooking = (id: string) => {
     setBookingToDelete(id);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleOpenDeliveryForm = (booking: any) => {
+    setSelectedDeliveryBooking(booking);
+    setIsDeliveryFormOpen(true);
+  };
+
+  const handleDeliveryFormSubmit = (formData: any) => {
+    const deliveryForm = getDeliveryForm(selectedDeliveryBooking?.id);
+    if (deliveryForm) {
+      updateBookingForm({ id: deliveryForm.id, ...formData });
+    }
   };
 
   const confirmDelete = () => {
@@ -238,77 +259,101 @@ export const BookingManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredBookings.map((booking) => (
-                <TableRow key={booking.id}>
-                  <TableCell className="font-medium">{booking.id.slice(0, 8)}...</TableCell>
-                  <TableCell>{booking.customers?.name || 'Unknown'}</TableCell>
-                  <TableCell>
-                    {booking.vehicles ? 
-                      `${booking.vehicles.brand} ${booking.vehicles.model} ${booking.vehicles.year}` : 
-                      'Unknown Vehicle'
-                    }
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="text-sm">
-                        {format(new Date(booking.start_date), 'MMM dd')} - {format(new Date(booking.end_date), 'MMM dd')}
+              {filteredBookings.map((booking) => {
+                const deliveryForm = getDeliveryForm(booking.id);
+                const hasDeliveryForm = !!deliveryForm;
+                const isDeliveryFormCompleted = deliveryForm?.completed_at;
+
+                return (
+                  <TableRow key={booking.id}>
+                    <TableCell className="font-medium">{booking.id.slice(0, 8)}...</TableCell>
+                    <TableCell>{booking.customers?.name || 'Unknown'}</TableCell>
+                    <TableCell>
+                      {booking.vehicles ? 
+                        `${booking.vehicles.brand} ${booking.vehicles.model} ${booking.vehicles.year}` : 
+                        'Unknown Vehicle'
+                      }
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="text-sm">
+                          {format(new Date(booking.start_date), 'MMM dd')} - {format(new Date(booking.end_date), 'MMM dd')}
+                        </div>
+                        <div className="text-xs text-muted-foreground">{booking.duration_days} days</div>
                       </div>
-                      <div className="text-xs text-muted-foreground">{booking.duration_days} days</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(booking.status)}>
-                      {booking.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>${booking.total_amount}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditBooking(booking)}
-                        disabled={isUpdating}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteBooking(booking.id)}
-                        disabled={isDeleting}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                      {booking.status === 'pending' && (
-                        <>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        <Badge className={getStatusColor(booking.status)}>
+                          {booking.status}
+                        </Badge>
+                        {booking.status === 'completed' && (
+                          <Badge variant={isDeliveryFormCompleted ? 'default' : 'secondary'} className="text-xs">
+                            {isDeliveryFormCompleted ? 'Form Complete' : 'Form Pending'}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>${booking.total_amount}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button variant="outline" size="sm">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditBooking(booking)}
+                          disabled={isUpdating}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteBooking(booking.id)}
+                          disabled={isDeleting}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                        {booking.status === 'pending' && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-green-600"
+                              onClick={() => handleApprove(booking.id)}
+                              disabled={isUpdating}
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600"
+                              onClick={() => handleReject(booking.id)}
+                              disabled={isUpdating}
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                        {booking.status === 'completed' && hasDeliveryForm && (
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-green-600"
-                            onClick={() => handleApprove(booking.id)}
-                            disabled={isUpdating}
+                            className="text-blue-600"
+                            onClick={() => handleOpenDeliveryForm(booking)}
+                            disabled={isUpdatingForm}
                           >
-                            <CheckCircle className="w-4 h-4" />
+                            <FileText className="w-4 h-4" />
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600"
-                            onClick={() => handleReject(booking.id)}
-                            disabled={isUpdating}
-                          >
-                            <XCircle className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
@@ -319,6 +364,14 @@ export const BookingManagement = () => {
         onClose={() => setIsModalOpen(false)}
         booking={selectedBooking}
         onSubmit={handleSubmitBooking}
+      />
+
+      <DeliveryFormModal
+        isOpen={isDeliveryFormOpen}
+        onClose={() => setIsDeliveryFormOpen(false)}
+        booking={selectedDeliveryBooking}
+        deliveryForm={selectedDeliveryBooking ? getDeliveryForm(selectedDeliveryBooking.id) : undefined}
+        onSubmit={handleDeliveryFormSubmit}
       />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
