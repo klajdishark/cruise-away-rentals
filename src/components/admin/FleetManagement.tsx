@@ -1,102 +1,14 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search, Filter, Car, Settings, Calendar, Edit, Trash } from 'lucide-react';
+import { Plus, Search, Filter, Car, Settings, Calendar, Edit, Trash, Loader2 } from 'lucide-react';
 import { VehicleModal } from './VehicleModal';
 import { useToast } from '@/hooks/use-toast';
-
-interface Vehicle {
-  id: number;
-  brand: string;
-  model: string;
-  year: number;
-  status: 'active' | 'rented' | 'maintenance' | 'inactive';
-  price: number;
-  location: string;
-  mileage: number;
-  nextService: string;
-  description?: string;
-  fuelType: 'gasoline' | 'diesel' | 'electric' | 'hybrid';
-  transmission: 'manual' | 'automatic';
-  seats: number;
-  color: string;
-  licensePlate: string;
-  images?: string[];
-}
-
-const initialVehicles: Vehicle[] = [
-  {
-    id: 1,
-    brand: 'Toyota',
-    model: 'Camry',
-    year: 2023,
-    status: 'active',
-    price: 45,
-    location: 'Downtown',
-    mileage: 12500,
-    nextService: '2024-02-15',
-    fuelType: 'gasoline',
-    transmission: 'automatic',
-    seats: 5,
-    color: 'Silver',
-    licensePlate: 'ABC-123',
-    images: ['https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=300&fit=crop'],
-  },
-  {
-    id: 2,
-    brand: 'Honda',
-    model: 'Civic',
-    year: 2022,
-    status: 'rented',
-    price: 40,
-    location: 'Airport',
-    mileage: 18200,
-    nextService: '2024-03-20',
-    fuelType: 'gasoline',
-    transmission: 'manual',
-    seats: 5,
-    color: 'White',
-    licensePlate: 'DEF-456',
-    images: ['https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400&h=300&fit=crop'],
-  },
-  {
-    id: 3,
-    brand: 'BMW',
-    model: 'X5',
-    year: 2023,
-    status: 'maintenance',
-    price: 85,
-    location: 'Downtown',
-    mileage: 8900,
-    nextService: '2024-01-30',
-    fuelType: 'gasoline',
-    transmission: 'automatic',
-    seats: 7,
-    color: 'Black',
-    licensePlate: 'GHI-789',
-    images: ['https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=300&fit=crop'],
-  },
-  {
-    id: 4,
-    brand: 'Tesla',
-    model: 'Model 3',
-    year: 2023,
-    status: 'active',
-    price: 75,
-    location: 'Mall',
-    mileage: 5600,
-    nextService: '2024-04-10',
-    fuelType: 'electric',
-    transmission: 'automatic',
-    seats: 5,
-    color: 'Red',
-    licensePlate: 'JKL-012',
-    images: ['https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&h=300&fit=crop'],
-  },
-];
+import { useVehicles, Vehicle } from '@/hooks/useVehicles';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -114,11 +26,12 @@ const getStatusColor = (status: string) => {
 };
 
 export const FleetManagement = () => {
-  const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
+  const { vehicles, loading, addVehicle, updateVehicle, deleteVehicle } = useVehicles();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | undefined>();
+  const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
   const filteredVehicles = vehicles.filter(vehicle => {
@@ -137,7 +50,7 @@ export const FleetManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteVehicle = (vehicleId: number) => {
+  const handleDeleteVehicle = async (vehicleId: string) => {
     const vehicle = vehicles.find(v => v.id === vehicleId);
     if (vehicle?.status === 'rented') {
       toast({
@@ -148,37 +61,37 @@ export const FleetManagement = () => {
       return;
     }
 
-    setVehicles(prev => prev.filter(v => v.id !== vehicleId));
-    toast({
-      title: "Vehicle Deleted",
-      description: "The vehicle has been successfully removed from your fleet.",
-    });
+    const success = await deleteVehicle(vehicleId);
+    if (success) {
+      toast({
+        title: "Vehicle Deleted",
+        description: "The vehicle has been successfully removed from your fleet.",
+      });
+    }
   };
 
-  const handleSubmitVehicle = (data: any) => {
-    if (editingVehicle) {
-      // Update existing vehicle
-      setVehicles(prev => prev.map(v => 
-        v.id === editingVehicle.id 
-          ? { ...v, ...data }
-          : v
-      ));
-      toast({
-        title: "Vehicle Updated",
-        description: "The vehicle information has been successfully updated.",
-      });
-    } else {
-      // Add new vehicle
-      const newVehicle: Vehicle = {
-        ...data,
-        id: Math.max(...vehicles.map(v => v.id)) + 1,
-        nextService: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 90 days from now
-      };
-      setVehicles(prev => [...prev, newVehicle]);
-      toast({
-        title: "Vehicle Added",
-        description: "The new vehicle has been successfully added to your fleet.",
-      });
+  const handleSubmitVehicle = async (data: any) => {
+    setSubmitting(true);
+    try {
+      if (editingVehicle) {
+        // Update existing vehicle
+        await updateVehicle(editingVehicle.id, data);
+        toast({
+          title: "Vehicle Updated",
+          description: "The vehicle information has been successfully updated.",
+        });
+      } else {
+        // Add new vehicle
+        await addVehicle(data);
+        toast({
+          title: "Vehicle Added",
+          description: "The new vehicle has been successfully added to your fleet.",
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting vehicle:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -192,6 +105,14 @@ export const FleetManagement = () => {
   };
 
   const stats = getFleetStats();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -297,7 +218,7 @@ export const FleetManagement = () => {
                     <div className="flex items-center gap-3">
                       {vehicle.images && vehicle.images.length > 0 && (
                         <img
-                          src={vehicle.images[0]}
+                          src={vehicle.images[0].image_url}
                           alt={`${vehicle.brand} ${vehicle.model}`}
                           className="w-12 h-12 object-cover rounded-md"
                           onError={(e) => {
@@ -320,7 +241,7 @@ export const FleetManagement = () => {
                   <TableCell>${vehicle.price}</TableCell>
                   <TableCell>{vehicle.location}</TableCell>
                   <TableCell>{vehicle.mileage.toLocaleString()} mi</TableCell>
-                  <TableCell>{vehicle.licensePlate}</TableCell>
+                  <TableCell>{vehicle.license_plate}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Button 
@@ -355,6 +276,7 @@ export const FleetManagement = () => {
         onClose={() => setIsModalOpen(false)}
         vehicle={editingVehicle}
         onSubmit={handleSubmitVehicle}
+        isSubmitting={submitting}
       />
     </div>
   );
