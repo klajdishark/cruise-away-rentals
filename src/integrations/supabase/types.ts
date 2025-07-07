@@ -368,6 +368,30 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicle_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vehicle_images: {
         Row: {
           created_at: string
@@ -406,6 +430,7 @@ export type Database = {
       vehicles: {
         Row: {
           brand: string
+          category_id: string | null
           color: string
           created_at: string
           description: string | null
@@ -424,6 +449,7 @@ export type Database = {
         }
         Insert: {
           brand: string
+          category_id?: string | null
           color: string
           created_at?: string
           description?: string | null
@@ -442,6 +468,7 @@ export type Database = {
         }
         Update: {
           brand?: string
+          category_id?: string | null
           color?: string
           created_at?: string
           description?: string | null
@@ -458,7 +485,15 @@ export type Database = {
           updated_at?: string
           year?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,6 +22,8 @@ import {
 } from '@/components/ui/select';
 import { ImageGallery } from './ImageGallery';
 import { Vehicle } from '@/hooks/useVehicles';
+import { useVehicleCategories } from '@/hooks/useVehicleCategories';
+import { useLocations } from '@/hooks/useLocations';
 
 const vehicleSchema = z.object({
   brand: z.string().min(1, 'Brand is required'),
@@ -38,6 +39,7 @@ const vehicleSchema = z.object({
   seats: z.number().min(1).max(15),
   color: z.string().min(1, 'Color is required'),
   license_plate: z.string().min(1, 'License plate is required'),
+  category_id: z.string().optional(),
 });
 
 type VehicleFormData = z.infer<typeof vehicleSchema>;
@@ -53,6 +55,8 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
   const [images, setImages] = useState<string[]>(
     vehicle?.images?.map(img => img.image_url) || []
   );
+  const { categories } = useVehicleCategories();
+  const { locations } = useLocations();
 
   const form = useForm<VehicleFormData>({
     resolver: zodResolver(vehicleSchema),
@@ -70,6 +74,7 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
       seats: vehicle.seats,
       color: vehicle.color,
       license_plate: vehicle.license_plate,
+      category_id: vehicle.category_id || '',
     } : {
       brand: '',
       model: '',
@@ -84,6 +89,7 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
       seats: 5,
       color: '',
       license_plate: '',
+      category_id: '',
     },
   });
 
@@ -121,6 +127,32 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
                 <FormLabel>Model</FormLabel>
                 <FormControl>
                   <Input placeholder="Camry, Civic, X5..." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="category_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <FormControl>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No Category</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -177,11 +209,11 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
                       <SelectValue placeholder="Select location" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Downtown">Downtown</SelectItem>
-                      <SelectItem value="Airport">Airport</SelectItem>
-                      <SelectItem value="Mall">Mall</SelectItem>
-                      <SelectItem value="North Station">North Station</SelectItem>
-                      <SelectItem value="South Station">South Station</SelectItem>
+                      {locations.map((location) => (
+                        <SelectItem key={location.id} value={location.name}>
+                          {location.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </FormControl>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,9 +18,15 @@ export interface Vehicle {
   seats: number;
   color: string;
   license_plate: string;
+  category_id?: string;
   created_at: string;
   updated_at: string;
   images?: VehicleImage[];
+  vehicle_categories?: {
+    id: string;
+    name: string;
+    description?: string;
+  };
 }
 
 export interface VehicleImage {
@@ -42,7 +47,7 @@ export const useVehicles = () => {
     try {
       setLoading(true);
       
-      // Fetch vehicles with their images
+      // Fetch vehicles with their images and categories
       const { data: vehiclesData, error: vehiclesError } = await supabase
         .from('vehicles')
         .select(`
@@ -54,6 +59,11 @@ export const useVehicles = () => {
             display_order,
             is_default,
             created_at
+          ),
+          vehicle_categories (
+            id,
+            name,
+            description
           )
         `)
         .order('created_at', { ascending: false });

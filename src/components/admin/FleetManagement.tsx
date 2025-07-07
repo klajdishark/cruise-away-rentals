@@ -216,6 +216,7 @@ export const FleetManagement = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Vehicle</TableHead>
+                <TableHead>Category</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Price/Day</TableHead>
                 <TableHead>Location</TableHead>
@@ -245,6 +246,15 @@ export const FleetManagement = () => {
                         <div className="text-sm text-muted-foreground">{vehicle.year} • {vehicle.color}</div>
                       </div>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {vehicle.vehicle_categories ? (
+                      <Badge variant="outline">
+                        {vehicle.vehicle_categories.name}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">No category</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(vehicle.status)}>
