@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +24,7 @@ interface Vehicle {
   seats: number;
   color: string;
   licensePlate: string;
+  images?: string[];
 }
 
 const initialVehicles: Vehicle[] = [
@@ -43,6 +43,7 @@ const initialVehicles: Vehicle[] = [
     seats: 5,
     color: 'Silver',
     licensePlate: 'ABC-123',
+    images: ['https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=300&fit=crop'],
   },
   {
     id: 2,
@@ -59,6 +60,7 @@ const initialVehicles: Vehicle[] = [
     seats: 5,
     color: 'White',
     licensePlate: 'DEF-456',
+    images: ['https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400&h=300&fit=crop'],
   },
   {
     id: 3,
@@ -75,6 +77,7 @@ const initialVehicles: Vehicle[] = [
     seats: 7,
     color: 'Black',
     licensePlate: 'GHI-789',
+    images: ['https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=300&fit=crop'],
   },
   {
     id: 4,
@@ -91,6 +94,7 @@ const initialVehicles: Vehicle[] = [
     seats: 5,
     color: 'Red',
     licensePlate: 'JKL-012',
+    images: ['https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&h=300&fit=crop'],
   },
 ];
 
@@ -290,9 +294,22 @@ export const FleetManagement = () => {
               {filteredVehicles.map((vehicle) => (
                 <TableRow key={vehicle.id}>
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{vehicle.brand} {vehicle.model}</div>
-                      <div className="text-sm text-muted-foreground">{vehicle.year} • {vehicle.color}</div>
+                    <div className="flex items-center gap-3">
+                      {vehicle.images && vehicle.images.length > 0 && (
+                        <img
+                          src={vehicle.images[0]}
+                          alt={`${vehicle.brand} ${vehicle.model}`}
+                          className="w-12 h-12 object-cover rounded-md"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=100&h=100&fit=crop';
+                          }}
+                        />
+                      )}
+                      <div>
+                        <div className="font-medium">{vehicle.brand} {vehicle.model}</div>
+                        <div className="text-sm text-muted-foreground">{vehicle.year} • {vehicle.color}</div>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>

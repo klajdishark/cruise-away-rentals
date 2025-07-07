@@ -25,6 +25,7 @@ interface Vehicle {
   seats: number;
   color: string;
   licensePlate: string;
+  images?: string[];
 }
 
 interface VehicleModalProps {

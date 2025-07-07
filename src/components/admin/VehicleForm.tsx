@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -23,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ImageGallery } from './ImageGallery';
 
 const vehicleSchema = z.object({
   brand: z.string().min(1, 'Brand is required'),
@@ -38,6 +38,7 @@ const vehicleSchema = z.object({
   seats: z.number().min(1).max(15),
   color: z.string().min(1, 'Color is required'),
   licensePlate: z.string().min(1, 'License plate is required'),
+  images: z.array(z.string()).optional(),
 });
 
 type VehicleFormData = z.infer<typeof vehicleSchema>;
@@ -55,6 +56,8 @@ interface VehicleFormProps {
 }
 
 export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false }: VehicleFormProps) => {
+  const [images, setImages] = useState<string[]>(vehicle?.images || []);
+
   const form = useForm<VehicleFormData>({
     resolver: zodResolver(vehicleSchema),
     defaultValues: vehicle ? {
@@ -71,6 +74,7 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
       seats: vehicle.seats,
       color: vehicle.color,
       licensePlate: vehicle.licensePlate,
+      images: vehicle.images || [],
     } : {
       brand: '',
       model: '',
@@ -85,11 +89,17 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
       seats: 5,
       color: '',
       licensePlate: '',
+      images: [],
     },
   });
 
   const handleSubmit = (data: VehicleFormData) => {
-    onSubmit(data);
+    onSubmit({ ...data, images });
+  };
+
+  const handleImagesChange = (newImages: string[]) => {
+    setImages(newImages);
+    form.setValue('images', newImages);
   };
 
   return (
@@ -341,6 +351,15 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
             </FormItem>
           )}
         />
+
+        <div className="space-y-4">
+          <Label>Vehicle Images</Label>
+          <ImageGallery
+            images={images}
+            onImagesChange={handleImagesChange}
+            maxImages={8}
+          />
+        </div>
 
         <div className="flex justify-end space-x-4">
           <Button type="button" variant="outline" onClick={onCancel}>
