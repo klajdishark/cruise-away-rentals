@@ -52,35 +52,85 @@ export const useBookingForms = () => {
     }
   });
 
-  // Update booking form mutation
-  const updateBookingFormMutation = useMutation({
-    mutationFn: async ({ id, ...updateData }: any) => {
-      const { data, error } = await supabase
+  // Create or update booking form mutation
+  const createOrUpdateBookingFormMutation = useMutation({
+    mutationFn: async (formData: any) => {
+      console.log('Mutation received data:', formData);
+      
+      // Check if a delivery form already exists for this booking
+      const { data: existingForm, error: checkError } = await supabase
         .from('booking_forms')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
+        .select('id')
+        .eq('booking_id', formData.booking_id)
+        .eq('form_type', 'delivery')
+        .maybeSingle();
 
-      if (error) {
-        throw error;
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking existing form:', checkError);
+        throw checkError;
       }
 
-      return data;
+      console.log('Existing form check result:', existingForm);
+
+      if (existingForm) {
+        // Update existing form
+        console.log('Updating existing form with ID:', existingForm.id);
+        const { data, error } = await supabase
+          .from('booking_forms')
+          .update({
+            mileage_reading: formData.mileage_reading,
+            fuel_level: formData.fuel_level,
+            damages: formData.damages,
+            inspector_notes: formData.inspector_notes,
+            inspector_signature: formData.inspector_signature,
+            customer_signature: formData.customer_signature,
+            photos: formData.photos,
+            completed_at: formData.completed_at,
+            completed_by: formData.completed_by,
+          })
+          .eq('id', existingForm.id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error updating form:', error);
+          throw error;
+        }
+
+        console.log('Form updated successfully:', data);
+        return data;
+      } else {
+        // Create new form
+        console.log('Creating new form');
+        const { data, error } = await supabase
+          .from('booking_forms')
+          .insert([formData])
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error creating form:', error);
+          throw error;
+        }
+
+        console.log('Form created successfully:', data);
+        return data;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['booking-forms'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       toast({
-        title: "Form Updated",
-        description: "Booking form has been successfully updated.",
+        title: "Form Saved",
+        description: "Delivery form has been successfully saved.",
       });
     },
     onError: (error: any) => {
+      console.error('Mutation error:', error);
       toast({
         variant: "destructive",
-        title: "Error Updating Form",
-        description: error.message || "Failed to update booking form",
+        title: "Error Saving Form",
+        description: error.message || "Failed to save delivery form",
       });
     }
   });
@@ -106,8 +156,8 @@ export const useBookingForms = () => {
     bookingForms,
     isLoading,
     error,
-    updateBookingForm: updateBookingFormMutation.mutate,
-    isUpdating: updateBookingFormMutation.isPending,
+    createOrUpdateBookingForm: createOrUpdateBookingFormMutation.mutate,
+    isUpdating: createOrUpdateBookingFormMutation.isPending,
     getBookingForms,
     getDeliveryForm,
     getPickupForm,

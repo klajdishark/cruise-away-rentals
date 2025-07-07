@@ -21,6 +21,7 @@ import { Car, Clock, User, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { ImageGallery } from './ImageGallery';
 import { useVehicles } from '@/hooks/useVehicles';
+import { useToast } from '@/hooks/use-toast';
 
 const deliveryFormSchema = z.object({
   mileage_reading: z.number().min(0, 'Mileage must be a positive number'),
@@ -48,6 +49,7 @@ export const DeliveryFormModal = ({ isOpen, onClose, booking, deliveryForm, onSu
   );
 
   const { updateVehicle } = useVehicles();
+  const { toast } = useToast();
 
   const form = useForm<DeliveryFormData>({
     resolver: zodResolver(deliveryFormSchema),
@@ -62,26 +64,51 @@ export const DeliveryFormModal = ({ isOpen, onClose, booking, deliveryForm, onSu
   });
 
   const handleSubmit = async (data: DeliveryFormData) => {
+    console.log('Starting delivery form submission:', data);
+    console.log('Existing delivery form:', deliveryForm);
+    console.log('Booking:', booking);
+
     setIsSubmitting(true);
     try {
       // Update vehicle mileage if provided
       if (data.mileage_reading && booking?.vehicle_id) {
+        console.log('Updating vehicle mileage:', data.mileage_reading);
         await updateVehicle(booking.vehicle_id, {
           mileage: data.mileage_reading
         });
       }
 
       const formData = {
-        ...data,
-        photos: inspectionImages,
+        booking_id: booking.id,
+        form_type: 'delivery',
+        mileage_reading: data.mileage_reading,
+        fuel_level: data.fuel_level,
+        damages: data.damages || null,
+        inspector_notes: data.inspector_notes || null,
+        inspector_signature: data.inspector_signature,
+        customer_signature: data.customer_signature || null,
+        photos: inspectionImages.length > 0 ? inspectionImages : null,
         completed_at: new Date().toISOString(),
         completed_by: 'current_user_id', // This should be replaced with actual user ID
       };
+
+      console.log('Form data to submit:', formData);
       
       await onSubmit(formData);
+      
+      toast({
+        title: "Success",
+        description: "Delivery form has been saved successfully.",
+      });
+      
       onClose();
     } catch (error) {
       console.error('Error submitting delivery form:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save delivery form. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }

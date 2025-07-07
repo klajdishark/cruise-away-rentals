@@ -55,7 +55,7 @@ export const BookingManagement = () => {
   const {
     bookingForms,
     getDeliveryForm,
-    updateBookingForm,
+    createOrUpdateBookingForm,
     isUpdating: isUpdatingForm
   } = useBookingForms();
 
@@ -105,10 +105,8 @@ export const BookingManagement = () => {
   };
 
   const handleDeliveryFormSubmit = (formData: any) => {
-    const deliveryForm = getDeliveryForm(selectedDeliveryBooking?.id);
-    if (deliveryForm) {
-      updateBookingForm({ id: deliveryForm.id, ...formData });
-    }
+    console.log('Submitting delivery form data:', formData);
+    createOrUpdateBookingForm(formData);
   };
 
   const confirmDelete = () => {
@@ -354,7 +352,7 @@ export const BookingManagement = () => {
                             </Button>
                           </>
                         )}
-                        {/* This is the delivery form button - it should show for completed bookings */}
+                        {/* Show delivery form button for completed bookings */}
                         {booking.status === 'completed' && (
                           <Button
                             variant="outline"
@@ -362,7 +360,7 @@ export const BookingManagement = () => {
                             className="text-blue-600"
                             onClick={() => handleOpenDeliveryForm(booking)}
                             disabled={isUpdatingForm}
-                            title={hasDeliveryForm ? 'View/Edit Delivery Form' : 'No delivery form available'}
+                            title={hasDeliveryForm ? (isDeliveryFormCompleted ? 'View Delivery Form' : 'Complete Delivery Form') : 'Create Delivery Form'}
                           >
                             <FileText className="w-4 h-4" />
                           </Button>
