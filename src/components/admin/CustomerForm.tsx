@@ -41,8 +41,8 @@ export const CustomerForm = ({ customer, onSubmit, onCancel }: CustomerFormProps
       date_of_birth: customer?.date_of_birth || '',
       license_number: customer?.license_number || '',
       license_expiry: customer?.license_expiry || '',
-      status: customer?.status || 'active',
-      license_status: customer?.license_status || 'pending',
+      status: (customer?.status as 'active' | 'flagged' | 'suspended') || 'active',
+      license_status: (customer?.license_status as 'verified' | 'pending' | 'rejected') || 'pending',
       notes: customer?.notes || '',
     },
   });
