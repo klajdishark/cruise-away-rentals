@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -38,7 +37,7 @@ interface BookingFormProps {
 
 export const BookingForm = ({ booking, onSubmit, onCancel }: BookingFormProps) => {
   const { customers, isLoading: customersLoading } = useCustomers();
-  const { vehicles, isLoading: vehiclesLoading } = useVehicles();
+  const { vehicles, loading: vehiclesLoading } = useVehicles();
 
   const form = useForm<BookingFormData>({
     resolver: zodResolver(bookingSchema),
