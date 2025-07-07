@@ -54,7 +54,7 @@ export const DeliveryFormModal = ({ isOpen, onClose, booking, deliveryForm, onSu
     defaultValues: {
       mileage_reading: deliveryForm?.mileage_reading || 0,
       fuel_level: deliveryForm?.fuel_level || 100,
-      damages: deliveryForm?.damages ? JSON.stringify(deliveryForm.damages) : '',
+      damages: deliveryForm?.damages || '',
       inspector_notes: deliveryForm?.inspector_notes || '',
       inspector_signature: deliveryForm?.inspector_signature || '',
       customer_signature: deliveryForm?.customer_signature || '',
@@ -73,7 +73,6 @@ export const DeliveryFormModal = ({ isOpen, onClose, booking, deliveryForm, onSu
 
       const formData = {
         ...data,
-        damages: data.damages ? JSON.parse(data.damages) : null,
         photos: inspectionImages,
         completed_at: new Date().toISOString(),
         completed_by: 'current_user_id', // This should be replaced with actual user ID
@@ -207,7 +206,7 @@ export const DeliveryFormModal = ({ isOpen, onClose, booking, deliveryForm, onSu
                   <FormLabel>Damages (if any)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Document any damages found (JSON format for detailed damage report)"
+                      placeholder="Document any damages found during inspection"
                       className="min-h-[100px]"
                       {...field}
                     />
