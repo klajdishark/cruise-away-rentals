@@ -73,23 +73,36 @@ export const FleetManagement = () => {
   const handleSubmitVehicle = async (data: any) => {
     setSubmitting(true);
     try {
+      console.log('Submitting vehicle data:', data);
+      
       if (editingVehicle) {
         // Update existing vehicle
-        await updateVehicle(editingVehicle.id, data);
-        toast({
-          title: "Vehicle Updated",
-          description: "The vehicle information has been successfully updated.",
-        });
+        const result = await updateVehicle(editingVehicle.id, data);
+        if (result) {
+          toast({
+            title: "Vehicle Updated",
+            description: "The vehicle information has been successfully updated.",
+          });
+          setIsModalOpen(false);
+        }
       } else {
         // Add new vehicle
-        await addVehicle(data);
-        toast({
-          title: "Vehicle Added",
-          description: "The new vehicle has been successfully added to your fleet.",
-        });
+        const result = await addVehicle(data);
+        if (result) {
+          toast({
+            title: "Vehicle Added",
+            description: "The new vehicle has been successfully added to your fleet.",
+          });
+          setIsModalOpen(false);
+        }
       }
     } catch (error) {
       console.error('Error submitting vehicle:', error);
+      toast({
+        title: "Error",
+        description: "An error occurred while saving the vehicle. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setSubmitting(false);
     }

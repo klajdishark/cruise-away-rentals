@@ -79,23 +79,49 @@ export const useVehicles = () => {
     }
   };
 
-  const addVehicle = async (vehicleData: Omit<Vehicle, 'id' | 'created_at' | 'updated_at' | 'images'>) => {
+  const addVehicle = async (vehicleData: Omit<Vehicle, 'id' | 'created_at' | 'updated_at' | 'images'> & { images?: string[] }) => {
     try {
-      const { data, error } = await supabase
+      console.log('Adding vehicle with data:', vehicleData);
+      
+      // Separate images from vehicle data
+      const { images, ...vehicleOnly } = vehicleData;
+      
+      // Insert vehicle without images
+      const { data: newVehicle, error: vehicleError } = await supabase
         .from('vehicles')
-        .insert([vehicleData])
+        .insert([vehicleOnly])
         .select()
         .single();
 
-      if (error) {
-        console.error('Error adding vehicle:', error);
+      if (vehicleError) {
+        console.error('Error adding vehicle:', vehicleError);
         toast.error('Failed to add vehicle');
         return null;
       }
 
+      console.log('Vehicle added successfully:', newVehicle);
+
+      // Add images if provided
+      if (images && images.length > 0) {
+        const imageRecords = images.map((imageUrl, index) => ({
+          vehicle_id: newVehicle.id,
+          image_url: imageUrl,
+          display_order: index
+        }));
+
+        const { error: imagesError } = await supabase
+          .from('vehicle_images')
+          .insert(imageRecords);
+
+        if (imagesError) {
+          console.error('Error adding vehicle images:', imagesError);
+          toast.error('Vehicle added but failed to add images');
+        }
+      }
+
       toast.success('Vehicle added successfully');
       await fetchVehicles(); // Refresh the list
-      return data;
+      return newVehicle;
     } catch (error) {
       console.error('Error adding vehicle:', error);
       toast.error('Failed to add vehicle');
@@ -103,24 +129,61 @@ export const useVehicles = () => {
     }
   };
 
-  const updateVehicle = async (id: string, vehicleData: Partial<Vehicle>) => {
+  const updateVehicle = async (id: string, vehicleData: Partial<Vehicle> & { images?: string[] }) => {
     try {
-      const { data, error } = await supabase
+      console.log('Updating vehicle with data:', vehicleData);
+      
+      // Separate images from vehicle data
+      const { images, ...vehicleOnly } = vehicleData;
+      
+      // Update vehicle without images
+      const { data: updatedVehicle, error: vehicleError } = await supabase
         .from('vehicles')
-        .update(vehicleData)
+        .update(vehicleOnly)
         .eq('id', id)
         .select()
         .single();
 
-      if (error) {
-        console.error('Error updating vehicle:', error);
+      if (vehicleError) {
+        console.error('Error updating vehicle:', vehicleError);
         toast.error('Failed to update vehicle');
         return null;
       }
 
+      // Handle images if provided
+      if (images !== undefined) {
+        // Delete existing images
+        const { error: deleteError } = await supabase
+          .from('vehicle_images')
+          .delete()
+          .eq('vehicle_id', id);
+
+        if (deleteError) {
+          console.error('Error deleting old images:', deleteError);
+        }
+
+        // Add new images
+        if (images.length > 0) {
+          const imageRecords = images.map((imageUrl, index) => ({
+            vehicle_id: id,
+            image_url: imageUrl,
+            display_order: index
+          }));
+
+          const { error: imagesError } = await supabase
+            .from('vehicle_images')
+            .insert(imageRecords);
+
+          if (imagesError) {
+            console.error('Error adding new vehicle images:', imagesError);
+            toast.error('Vehicle updated but failed to update images');
+          }
+        }
+      }
+
       toast.success('Vehicle updated successfully');
       await fetchVehicles(); // Refresh the list
-      return data;
+      return updatedVehicle;
     } catch (error) {
       console.error('Error updating vehicle:', error);
       toast.error('Failed to update vehicle');
