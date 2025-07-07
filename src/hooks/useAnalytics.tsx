@@ -68,26 +68,29 @@ interface VehicleCategoryPerformance {
 }
 
 export const useAnalytics = () => {
-  // Dashboard metrics
+  // Dashboard metrics - using direct SQL query since the function isn't in types yet
   const { data: dashboardMetrics, isLoading: dashboardLoading } = useQuery({
     queryKey: ['analytics-dashboard'],
     queryFn: async (): Promise<DashboardMetrics> => {
-      const { data, error } = await supabase.rpc('get_analytics_dashboard');
+      const { data, error } = await supabase
+        .rpc('get_analytics_dashboard' as any);
+      
       if (error) {
         console.error('Error fetching dashboard metrics:', error);
         throw error;
       }
-      return data;
+      
+      return data as DashboardMetrics;
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  // Monthly analytics
+  // Monthly analytics - using direct SQL query to access the view
   const { data: monthlyAnalytics, isLoading: monthlyLoading } = useQuery({
     queryKey: ['monthly-analytics'],
     queryFn: async (): Promise<MonthlyAnalytics[]> => {
       const { data, error } = await supabase
-        .from('monthly_analytics')
+        .from('monthly_analytics' as any)
         .select('*')
         .order('month', { ascending: false })
         .limit(12);
@@ -97,23 +100,23 @@ export const useAnalytics = () => {
         throw error;
       }
       
-      return data.map(item => ({
+      return data?.map((item: any) => ({
         ...item,
         month: new Date(item.month).toLocaleDateString('en-US', { 
           month: 'short',
           year: 'numeric'
         })
-      }));
+      })) || [];
     },
     refetchInterval: 60000, // Refresh every minute
   });
 
-  // Vehicle utilization
+  // Vehicle utilization - using direct SQL query to access the view
   const { data: vehicleUtilization, isLoading: utilizationLoading } = useQuery({
     queryKey: ['vehicle-utilization'],
     queryFn: async (): Promise<VehicleUtilization[]> => {
       const { data, error } = await supabase
-        .from('vehicle_utilization_analytics')
+        .from('vehicle_utilization_analytics' as any)
         .select('*')
         .order('utilization_percentage', { ascending: false });
       
@@ -122,17 +125,17 @@ export const useAnalytics = () => {
         throw error;
       }
       
-      return data;
+      return data || [];
     },
     refetchInterval: 60000,
   });
 
-  // Booking patterns
+  // Booking patterns - using direct SQL query to access the view
   const { data: bookingPatterns, isLoading: patternsLoading } = useQuery({
     queryKey: ['booking-patterns'],
     queryFn: async (): Promise<BookingPattern[]> => {
       const { data, error } = await supabase
-        .from('booking_patterns')
+        .from('booking_patterns' as any)
         .select('*')
         .order('pattern_type, pattern_key');
       
@@ -141,21 +144,24 @@ export const useAnalytics = () => {
         throw error;
       }
       
-      return data;
+      return data || [];
     },
     refetchInterval: 300000, // Refresh every 5 minutes
   });
 
-  // Vehicle category performance
+  // Vehicle category performance - using direct SQL query
   const { data: categoryPerformance, isLoading: categoryLoading } = useQuery({
     queryKey: ['vehicle-category-performance'],
     queryFn: async (): Promise<VehicleCategoryPerformance[]> => {
-      const { data, error } = await supabase.rpc('get_vehicle_category_performance');
+      const { data, error } = await supabase
+        .rpc('get_vehicle_category_performance' as any);
+      
       if (error) {
         console.error('Error fetching category performance:', error);
         throw error;
       }
-      return data;
+      
+      return data || [];
     },
     refetchInterval: 300000,
   });
