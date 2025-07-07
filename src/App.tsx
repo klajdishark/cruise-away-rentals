@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Cars from "./pages/Cars";
 import Booking from "./pages/Booking";
 import Dashboard from "./pages/Dashboard";
+import Login from "./pages/Login";
 import HowItWorks from "./pages/HowItWorks";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
@@ -22,6 +23,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/cars" element={<Cars />} />
           <Route path="/booking/:carId" element={<Booking />} />
           <Route path="/dashboard" element={<Dashboard />} />
