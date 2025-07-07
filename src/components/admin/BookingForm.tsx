@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -79,37 +80,40 @@ export const BookingForm = ({ booking, onSubmit, onCancel }: BookingFormProps) =
     }
   }, [selectedVehicleId, vehicles, form]);
 
-  // Memoize the availability check function to prevent unnecessary calls
-  const performAvailabilityCheck = useCallback(async () => {
-    if (selectedVehicleId && startDate && endDate) {
-      const isAvailable = await checkAvailability({
-        vehicleId: selectedVehicleId,
-        startDate,
-        endDate,
-        excludeBookingId: booking?.id // Exclude current booking when editing
-      });
-
-      setIsVehicleAvailable(isAvailable);
-      
-      if (!isAvailable) {
-        const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
-        const vehicleName = selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.model}` : 'Selected vehicle';
-        setAvailabilityMessage(
-          `${vehicleName} is not available from ${startDate} to ${endDate}. Please select different dates or choose another vehicle.`
-        );
-      } else {
-        setAvailabilityMessage('');
-      }
-    } else {
-      setIsVehicleAvailable(true);
-      setAvailabilityMessage('');
-    }
-  }, [selectedVehicleId, startDate, endDate, checkAvailability, vehicles, booking?.id]);
-
   // Check availability when vehicle or dates change
   useEffect(() => {
+    const performAvailabilityCheck = async () => {
+      if (selectedVehicleId && startDate && endDate) {
+        console.log('Performing availability check for:', { selectedVehicleId, startDate, endDate });
+        
+        const isAvailable = await checkAvailability({
+          vehicleId: selectedVehicleId,
+          startDate,
+          endDate,
+          excludeBookingId: booking?.id
+        });
+
+        console.log('Availability result:', isAvailable);
+        setIsVehicleAvailable(isAvailable);
+        
+        if (!isAvailable) {
+          const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
+          const vehicleName = selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.model}` : 'Selected vehicle';
+          setAvailabilityMessage(
+            `${vehicleName} is not available from ${startDate} to ${endDate}. Please select different dates or choose another vehicle.`
+          );
+        } else {
+          setAvailabilityMessage('');
+        }
+      } else {
+        console.log('Resetting availability - missing required fields');
+        setIsVehicleAvailable(true);
+        setAvailabilityMessage('');
+      }
+    };
+
     performAvailabilityCheck();
-  }, [performAvailabilityCheck]);
+  }, [selectedVehicleId, startDate, endDate, booking?.id]); // Removed checkAvailability and vehicles from dependencies
 
   const handleSubmit = (data: BookingFormData) => {
     if (!isVehicleAvailable) {
