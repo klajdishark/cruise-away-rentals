@@ -74,7 +74,7 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
       seats: vehicle.seats,
       color: vehicle.color,
       license_plate: vehicle.license_plate,
-      category_id: vehicle.category_id || '',
+      category_id: vehicle.category_id || 'none',
     } : {
       brand: '',
       model: '',
@@ -89,12 +89,18 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
       seats: 5,
       color: '',
       license_plate: '',
-      category_id: '',
+      category_id: 'none',
     },
   });
 
   const handleSubmit = (data: VehicleFormData) => {
-    onSubmit({ ...data, images });
+    // Convert "none" back to undefined/empty for the API
+    const submitData = {
+      ...data,
+      category_id: data.category_id === 'none' ? undefined : data.category_id,
+      images
+    };
+    onSubmit(submitData);
   };
 
   const handleImagesChange = (newImages: string[]) => {
@@ -145,7 +151,7 @@ export const VehicleForm = ({ vehicle, onSubmit, onCancel, isSubmitting = false 
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Category</SelectItem>
+                      <SelectItem value="none">No Category</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
