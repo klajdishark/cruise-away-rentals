@@ -21,6 +21,7 @@ import { Car, Clock, User, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { ImageGallery } from './ImageGallery';
 import { useVehicles } from '@/hooks/useVehicles';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
 const deliveryFormSchema = z.object({
@@ -49,6 +50,7 @@ export const DeliveryFormModal = ({ isOpen, onClose, booking, deliveryForm, onSu
   );
 
   const { updateVehicle } = useVehicles();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const form = useForm<DeliveryFormData>({
@@ -67,6 +69,16 @@ export const DeliveryFormModal = ({ isOpen, onClose, booking, deliveryForm, onSu
     console.log('Starting delivery form submission:', data);
     console.log('Existing delivery form:', deliveryForm);
     console.log('Booking:', booking);
+    console.log('Current user:', user);
+
+    if (!user?.id) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "You must be logged in to complete this form.",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -89,7 +101,7 @@ export const DeliveryFormModal = ({ isOpen, onClose, booking, deliveryForm, onSu
         customer_signature: data.customer_signature || null,
         photos: inspectionImages.length > 0 ? inspectionImages : null,
         completed_at: new Date().toISOString(),
-        completed_by: 'current_user_id', // This should be replaced with actual user ID
+        completed_by: user.id, // Use the actual authenticated user's ID
       };
 
       console.log('Form data to submit:', formData);
