@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Calendar, CheckCircle, Clock, Edit, Eye, Filter, Grid, Plus, Search, Tr
 import { BookingModal } from './BookingModal';
 import { CalendarView } from './CalendarView';
 import { DeliveryFormModal } from './DeliveryFormModal';
+import { BookingReviewModal } from './BookingReviewModal';
 import { useBookings } from '@/hooks/useBookings';
 import { useBookingForms } from '@/hooks/useBookingForms';
 import {
@@ -68,6 +68,8 @@ export const BookingManagement = () => {
   const [viewMode, setViewMode] = useState('table');
   const [isDeliveryFormOpen, setIsDeliveryFormOpen] = useState(false);
   const [selectedDeliveryBooking, setSelectedDeliveryBooking] = useState<any | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedReviewBooking, setSelectedReviewBooking] = useState<any | null>(null);
 
   // Debug logging to help identify issues
   console.log('Booking forms loaded:', bookingForms);
@@ -102,6 +104,12 @@ export const BookingManagement = () => {
     console.log('Opening delivery form for booking:', booking.id);
     setSelectedDeliveryBooking(booking);
     setIsDeliveryFormOpen(true);
+  };
+
+  const handleOpenReviewModal = (booking: any) => {
+    console.log('Opening review modal for booking:', booking.id);
+    setSelectedReviewBooking(booking);
+    setIsReviewModalOpen(true);
   };
 
   const handleDeliveryFormSubmit = (formData: any) => {
@@ -311,7 +319,11 @@ export const BookingManagement = () => {
                     <TableCell>${booking.total_amount}</TableCell>
                     <TableCell>
                       <div className="flex gap-2 flex-wrap">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleOpenReviewModal(booking)}
+                        >
                           <Eye className="w-4 h-4" />
                         </Button>
                         <Button
@@ -352,15 +364,15 @@ export const BookingManagement = () => {
                             </Button>
                           </>
                         )}
-                        {/* Show delivery form button for completed bookings */}
-                        {booking.status === 'completed' && (
+                        {/* Show delivery form button for completed bookings only if not completed */}
+                        {booking.status === 'completed' && !isDeliveryFormCompleted && (
                           <Button
                             variant="outline"
                             size="sm"
                             className="text-blue-600"
                             onClick={() => handleOpenDeliveryForm(booking)}
                             disabled={isUpdatingForm}
-                            title={hasDeliveryForm ? (isDeliveryFormCompleted ? 'View Delivery Form' : 'Complete Delivery Form') : 'Create Delivery Form'}
+                            title={hasDeliveryForm ? 'Complete Delivery Form' : 'Create Delivery Form'}
                           >
                             <FileText className="w-4 h-4" />
                           </Button>
@@ -388,6 +400,13 @@ export const BookingManagement = () => {
         booking={selectedDeliveryBooking}
         deliveryForm={selectedDeliveryBooking ? getDeliveryForm(selectedDeliveryBooking.id) : undefined}
         onSubmit={handleDeliveryFormSubmit}
+      />
+
+      <BookingReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        booking={selectedReviewBooking}
+        deliveryForm={selectedReviewBooking ? getDeliveryForm(selectedReviewBooking.id) : undefined}
       />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
