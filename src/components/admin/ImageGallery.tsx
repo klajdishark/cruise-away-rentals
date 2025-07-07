@@ -1,10 +1,10 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Plus, X, Upload, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useVehicles } from '@/hooks/useVehicles';
 
 interface ImageGalleryProps {
   images: string[];
@@ -28,6 +28,7 @@ export const ImageGallery = ({
   const [uploadProgress, setUploadProgress] = useState<UploadProgress>({});
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { uploadVehicleImage } = useVehicles();
 
   const validateFile = (file: File): string | null => {
     if (!allowedTypes.includes(file.type)) {
@@ -39,28 +40,6 @@ export const ImageGallery = ({
     }
     
     return null;
-  };
-
-  const simulateUpload = (fileId: string): Promise<string> => {
-    return new Promise((resolve) => {
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += Math.random() * 30;
-        if (progress >= 100) {
-          progress = 100;
-          clearInterval(interval);
-          setUploadProgress(prev => {
-            const newProgress = { ...prev };
-            delete newProgress[fileId];
-            return newProgress;
-          });
-          // Simulate uploaded image URL (in real implementation, this would come from your storage service)
-          resolve(`https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=400&fit=crop&random=${Date.now()}`);
-        } else {
-          setUploadProgress(prev => ({ ...prev, [fileId]: progress }));
-        }
-      }, 200);
-    });
   };
 
   const handleFileSelect = async (files: FileList | null) => {
@@ -98,7 +77,30 @@ export const ImageGallery = ({
       setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
       
       try {
-        const uploadedUrl = await simulateUpload(fileId);
+        // Simulate progress updates
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => {
+            const currentProgress = prev[fileId] || 0;
+            if (currentProgress < 90) {
+              return { ...prev, [fileId]: currentProgress + Math.random() * 20 };
+            }
+            return prev;
+          });
+        }, 200);
+
+        const uploadedUrl = await uploadVehicleImage(file);
+        
+        clearInterval(progressInterval);
+        setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
+        
+        setTimeout(() => {
+          setUploadProgress(prev => {
+            const newProgress = { ...prev };
+            delete newProgress[fileId];
+            return newProgress;
+          });
+        }, 1000);
+
         return uploadedUrl;
       } catch (error) {
         toast.error(`Failed to upload ${file.name}`);

@@ -109,6 +109,8 @@ export const useVehicles = () => {
           display_order: index
         }));
 
+        console.log('Inserting image records:', imageRecords);
+
         const { error: imagesError } = await supabase
           .from('vehicle_images')
           .insert(imageRecords);
@@ -116,6 +118,8 @@ export const useVehicles = () => {
         if (imagesError) {
           console.error('Error adding vehicle images:', imagesError);
           toast.error('Vehicle added but failed to add images');
+        } else {
+          console.log('Images added successfully');
         }
       }
 
@@ -214,10 +218,12 @@ export const useVehicles = () => {
     }
   };
 
-  const uploadVehicleImage = async (vehicleId: string, file: File, displayOrder: number = 0) => {
+  const uploadVehicleImage = async (file: File): Promise<string | null> => {
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${vehicleId}/${Date.now()}.${fileExt}`;
+      const fileName = `${Date.now()}.${fileExt}`;
+
+      console.log('Uploading image to Supabase storage:', fileName);
 
       // Upload to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -235,24 +241,8 @@ export const useVehicles = () => {
         .from('vehicle-images')
         .getPublicUrl(fileName);
 
-      // Save image record to database
-      const { data: imageData, error: imageError } = await supabase
-        .from('vehicle_images')
-        .insert([{
-          vehicle_id: vehicleId,
-          image_url: publicUrl,
-          display_order: displayOrder
-        }])
-        .select()
-        .single();
-
-      if (imageError) {
-        console.error('Error saving image record:', imageError);
-        toast.error('Failed to save image record');
-        return null;
-      }
-
-      return imageData;
+      console.log('Image uploaded successfully, public URL:', publicUrl);
+      return publicUrl;
     } catch (error) {
       console.error('Error uploading vehicle image:', error);
       toast.error('Failed to upload image');
@@ -264,7 +254,7 @@ export const useVehicles = () => {
     try {
       // Extract file path from URL
       const urlParts = imageUrl.split('/');
-      const filePath = urlParts.slice(-2).join('/'); // Get last two parts (vehicleId/filename)
+      const filePath = urlParts[urlParts.length - 1]; // Get the filename
 
       // Delete from storage
       const { error: storageError } = await supabase.storage
