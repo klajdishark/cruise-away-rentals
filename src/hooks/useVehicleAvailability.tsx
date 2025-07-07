@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AvailabilityCheckParams {
@@ -12,7 +12,7 @@ interface AvailabilityCheckParams {
 export const useVehicleAvailability = () => {
   const [isChecking, setIsChecking] = useState(false);
 
-  const checkAvailability = async ({ 
+  const checkAvailability = useCallback(async ({ 
     vehicleId, 
     startDate, 
     endDate, 
@@ -47,7 +47,7 @@ export const useVehicleAvailability = () => {
     } finally {
       setIsChecking(false);
     }
-  };
+  }, []); // Empty dependency array since the function doesn't depend on any external values
 
   return {
     checkAvailability,
