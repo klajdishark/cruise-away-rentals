@@ -6,20 +6,76 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Settings, DollarSign, Shield, MapPin, Clock } from 'lucide-react';
-
-const locations = [
-  { id: 1, name: 'Downtown Branch', address: '123 Main St, City Center', status: 'active' },
-  { id: 2, name: 'Airport Location', address: '456 Airport Blvd, Terminal A', status: 'active' },
-  { id: 3, name: 'Mall Branch', address: '789 Shopping Mall Dr', status: 'active' },
-  { id: 4, name: 'University Campus', address: '321 University Ave', status: 'inactive' },
-];
+import { Settings, DollarSign, Shield, MapPin, Clock, Plus, Edit, Loader2 } from 'lucide-react';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
+import { useLocations } from '@/hooks/useLocations';
+import { LocationModal } from './LocationModal';
 
 export const SystemSettings = () => {
-  const [minAge, setMinAge] = useState('21');
-  const [maxMileage, setMaxMileage] = useState('200');
-  const [cancellationHours, setCancellationHours] = useState('24');
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const { getSetting, updateSetting, isLoading: settingsLoading, isUpdating } = useSystemSettings();
+  const { locations, updateLocation, addLocation, isLoading: locationsLoading, isUpdating: locationUpdating, isAdding } = useLocations();
+  
+  const [localSettings, setLocalSettings] = useState({
+    minAge: '',
+    maxMileage: '',
+    cancellationHours: '',
+    baseTaxRate: '',
+    securityDeposit: '',
+    maintenanceMode: false,
+  });
+
+  const [locationModal, setLocationModal] = useState<{
+    isOpen: boolean;
+    location?: any;
+  }>({ isOpen: false });
+
+  // Initialize local settings when data loads
+  React.useEffect(() => {
+    if (!settingsLoading) {
+      setLocalSettings({
+        minAge: getSetting('min_age') || '21',
+        maxMileage: getSetting('max_mileage') || '200',
+        cancellationHours: getSetting('cancellation_hours') || '24',
+        baseTaxRate: getSetting('base_tax_rate') || '8.5',
+        securityDeposit: getSetting('security_deposit') || '200',
+        maintenanceMode: getSetting('maintenance_mode') === 'true',
+      });
+    }
+  }, [settingsLoading, getSetting]);
+
+  const handleSaveAll = () => {
+    updateSetting('min_age', localSettings.minAge);
+    updateSetting('max_mileage', localSettings.maxMileage);
+    updateSetting('cancellation_hours', localSettings.cancellationHours);
+    updateSetting('base_tax_rate', localSettings.baseTaxRate);
+    updateSetting('security_deposit', localSettings.securityDeposit);
+    updateSetting('maintenance_mode', localSettings.maintenanceMode.toString());
+  };
+
+  const handleLocationSave = (location: any) => {
+    if (location.id) {
+      updateLocation(location.id, location);
+    } else {
+      addLocation(location);
+    }
+    setLocationModal({ isOpen: false });
+  };
+
+  const handleEditLocation = (location: any) => {
+    setLocationModal({ isOpen: true, location });
+  };
+
+  const handleAddLocation = () => {
+    setLocationModal({ isOpen: true });
+  };
+
+  if (settingsLoading || locationsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -28,9 +84,9 @@ export const SystemSettings = () => {
           <h1 className="text-3xl font-bold tracking-tight">System Settings</h1>
           <p className="text-muted-foreground">Configure global system settings and policies</p>
         </div>
-        <Button>
+        <Button onClick={handleSaveAll} disabled={isUpdating}>
           <Settings className="w-4 h-4 mr-2" />
-          Save All Changes
+          {isUpdating ? 'Saving...' : 'Save All Changes'}
         </Button>
       </div>
 
@@ -50,8 +106,8 @@ export const SystemSettings = () => {
               <Input
                 id="min-age"
                 type="number"
-                value={minAge}
-                onChange={(e) => setMinAge(e.target.value)}
+                value={localSettings.minAge}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, minAge: e.target.value }))}
                 className="mt-1"
               />
             </div>
@@ -60,8 +116,8 @@ export const SystemSettings = () => {
               <Input
                 id="max-mileage"
                 type="number"
-                value={maxMileage}
-                onChange={(e) => setMaxMileage(e.target.value)}
+                value={localSettings.maxMileage}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, maxMileage: e.target.value }))}
                 className="mt-1"
               />
             </div>
@@ -70,8 +126,8 @@ export const SystemSettings = () => {
               <Input
                 id="cancellation-hours"
                 type="number"
-                value={cancellationHours}
-                onChange={(e) => setCancellationHours(e.target.value)}
+                value={localSettings.cancellationHours}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, cancellationHours: e.target.value }))}
                 className="mt-1"
               />
             </div>
@@ -100,13 +156,26 @@ export const SystemSettings = () => {
                   <Badge variant={location.status === 'active' ? 'default' : 'secondary'}>
                     {location.status}
                   </Badge>
-                  <Button variant="outline" size="sm">Edit</Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleEditLocation(location)}
+                    disabled={locationUpdating}
+                  >
+                    <Edit className="w-4 h-4 mr-1" />
+                    Edit
+                  </Button>
                 </div>
               </div>
             ))}
-            <Button variant="outline" className="w-full">
-              <MapPin className="w-4 h-4 mr-2" />
-              Add New Location
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={handleAddLocation}
+              disabled={isAdding}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              {isAdding ? 'Adding...' : 'Add New Location'}
             </Button>
           </div>
         </CardContent>
@@ -125,11 +194,21 @@ export const SystemSettings = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label>Base Tax Rate (%)</Label>
-              <Input type="number" defaultValue="8.5" className="mt-1" />
+              <Input 
+                type="number" 
+                value={localSettings.baseTaxRate}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, baseTaxRate: e.target.value }))}
+                className="mt-1" 
+              />
             </div>
             <div>
               <Label>Security Deposit ($)</Label>
-              <Input type="number" defaultValue="200" className="mt-1" />
+              <Input 
+                type="number" 
+                value={localSettings.securityDeposit}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, securityDeposit: e.target.value }))}
+                className="mt-1" 
+              />
             </div>
           </div>
         </CardContent>
@@ -153,8 +232,8 @@ export const SystemSettings = () => {
               </div>
             </div>
             <Switch 
-              checked={maintenanceMode}
-              onCheckedChange={setMaintenanceMode}
+              checked={localSettings.maintenanceMode}
+              onCheckedChange={(checked) => setLocalSettings(prev => ({ ...prev, maintenanceMode: checked }))}
             />
           </div>
           
@@ -174,6 +253,14 @@ export const SystemSettings = () => {
           </div>
         </CardContent>
       </Card>
+
+      <LocationModal
+        isOpen={locationModal.isOpen}
+        onClose={() => setLocationModal({ isOpen: false })}
+        onSave={handleLocationSave}
+        location={locationModal.location}
+        isLoading={locationUpdating || isAdding}
+      />
     </div>
   );
 };
