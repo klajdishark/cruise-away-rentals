@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -103,7 +102,7 @@ export const useVehicles = () => {
 
       // Add images if provided
       if (images && images.length > 0) {
-        const imageRecords = images.map((imageUrl, index) => ({
+        const imageRecords = images.map((imageUrl: string, index: number) => ({
           vehicle_id: newVehicle.id,
           image_url: imageUrl,
           display_order: index
@@ -168,7 +167,7 @@ export const useVehicles = () => {
 
         // Add new images
         if (images.length > 0) {
-          const imageRecords = images.map((imageUrl, index) => ({
+          const imageRecords = images.map((imageUrl: string, index: number) => ({
             vehicle_id: id,
             image_url: imageUrl,
             display_order: index
