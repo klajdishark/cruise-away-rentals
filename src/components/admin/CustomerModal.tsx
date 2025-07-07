@@ -8,23 +8,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { CustomerForm } from './CustomerForm';
+import { Tables } from '@/integrations/supabase/types';
 
-interface Customer {
-  id?: string;
-  name: string;
-  email: string;
-  phone: string;
-  address?: string;
-  dateOfBirth?: string;
-  licenseNumber: string;
-  licenseExpiry: string;
-  joinDate?: string;
-  totalBookings?: number;
-  totalSpent?: number;
-  status: 'active' | 'verified' | 'vip' | 'flagged' | 'suspended';
-  licenseStatus: 'verified' | 'pending' | 'rejected';
-  notes?: string;
-}
+type Customer = Tables<'customers'>;
 
 interface CustomerModalProps {
   isOpen: boolean;

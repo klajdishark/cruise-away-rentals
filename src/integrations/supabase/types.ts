@@ -14,12 +14,126 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_documents: {
+        Row: {
+          created_at: string
+          customer_id: string
+          document_name: string
+          document_type: string
+          file_size: number | null
+          file_url: string
+          id: string
+          mime_type: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          document_name: string
+          document_type: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          mime_type?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          document_name?: string
+          document_type?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          mime_type?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          created_at: string
+          date_of_birth: string | null
+          email: string
+          id: string
+          license_expiry: string
+          license_number: string
+          license_status: string
+          name: string
+          notes: string | null
+          phone: string
+          profile_id: string | null
+          status: string
+          total_bookings: number
+          total_spent: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_of_birth?: string | null
+          email: string
+          id?: string
+          license_expiry: string
+          license_number: string
+          license_status?: string
+          name: string
+          notes?: string | null
+          phone: string
+          profile_id?: string | null
+          status?: string
+          total_bookings?: number
+          total_spent?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string
+          id?: string
+          license_expiry?: string
+          license_number?: string
+          license_status?: string
+          name?: string
+          notes?: string | null
+          phone?: string
+          profile_id?: string | null
+          status?: string
+          total_bookings?: number
+          total_spent?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
           email: string
           first_name: string | null
           id: string
+          is_suspended: boolean
           last_name: string | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
@@ -29,6 +143,7 @@ export type Database = {
           email: string
           first_name?: string | null
           id: string
+          is_suspended?: boolean
           last_name?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
@@ -38,6 +153,7 @@ export type Database = {
           email?: string
           first_name?: string | null
           id?: string
+          is_suspended?: boolean
           last_name?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string

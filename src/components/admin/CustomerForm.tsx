@@ -5,42 +5,25 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
+import { Tables } from '@/integrations/supabase/types';
 
 const customerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   phone: z.string().min(10, 'Phone number must be at least 10 characters'),
-  address: z.string().optional(),
-  dateOfBirth: z.string().optional(),
-  licenseNumber: z.string().min(5, 'License number must be at least 5 characters'),
-  licenseExpiry: z.string().min(1, 'License expiry date is required'),
-  status: z.enum(['active', 'verified', 'vip', 'flagged', 'suspended']),
-  licenseStatus: z.enum(['verified', 'pending', 'rejected']),
+  date_of_birth: z.string().optional(),
+  license_number: z.string().min(5, 'License number must be at least 5 characters'),
+  license_expiry: z.string().min(1, 'License expiry date is required'),
+  status: z.enum(['active', 'flagged', 'suspended']),
+  license_status: z.enum(['verified', 'pending', 'rejected']),
   notes: z.string().optional(),
 });
 
 type CustomerFormData = z.infer<typeof customerSchema>;
-
-interface Customer {
-  id?: string;
-  name: string;
-  email: string;
-  phone: string;
-  address?: string;
-  dateOfBirth?: string;
-  licenseNumber: string;
-  licenseExpiry: string;
-  joinDate?: string;
-  totalBookings?: number;
-  totalSpent?: number;
-  status: 'active' | 'verified' | 'vip' | 'flagged' | 'suspended';
-  licenseStatus: 'verified' | 'pending' | 'rejected';
-  notes?: string;
-}
+type Customer = Tables<'customers'>;
 
 interface CustomerFormProps {
   customer?: Customer;
@@ -55,12 +38,11 @@ export const CustomerForm = ({ customer, onSubmit, onCancel }: CustomerFormProps
       name: customer?.name || '',
       email: customer?.email || '',
       phone: customer?.phone || '',
-      address: customer?.address || '',
-      dateOfBirth: customer?.dateOfBirth || '',
-      licenseNumber: customer?.licenseNumber || '',
-      licenseExpiry: customer?.licenseExpiry || '',
+      date_of_birth: customer?.date_of_birth || '',
+      license_number: customer?.license_number || '',
+      license_expiry: customer?.license_expiry || '',
       status: customer?.status || 'active',
-      licenseStatus: customer?.licenseStatus || 'pending',
+      license_status: customer?.license_status || 'pending',
       notes: customer?.notes || '',
     },
   });
@@ -117,7 +99,7 @@ export const CustomerForm = ({ customer, onSubmit, onCancel }: CustomerFormProps
 
           <FormField
             control={form.control}
-            name="dateOfBirth"
+            name="date_of_birth"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Date of Birth</FormLabel>
@@ -131,7 +113,7 @@ export const CustomerForm = ({ customer, onSubmit, onCancel }: CustomerFormProps
 
           <FormField
             control={form.control}
-            name="licenseNumber"
+            name="license_number"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Driver's License Number</FormLabel>
@@ -145,7 +127,7 @@ export const CustomerForm = ({ customer, onSubmit, onCancel }: CustomerFormProps
 
           <FormField
             control={form.control}
-            name="licenseExpiry"
+            name="license_expiry"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>License Expiry Date</FormLabel>
@@ -171,8 +153,6 @@ export const CustomerForm = ({ customer, onSubmit, onCancel }: CustomerFormProps
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="verified">Verified</SelectItem>
-                    <SelectItem value="vip">VIP</SelectItem>
                     <SelectItem value="flagged">Flagged</SelectItem>
                     <SelectItem value="suspended">Suspended</SelectItem>
                   </SelectContent>
@@ -184,7 +164,7 @@ export const CustomerForm = ({ customer, onSubmit, onCancel }: CustomerFormProps
 
           <FormField
             control={form.control}
-            name="licenseStatus"
+            name="license_status"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>License Status</FormLabel>
@@ -205,20 +185,6 @@ export const CustomerForm = ({ customer, onSubmit, onCancel }: CustomerFormProps
             )}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="address"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Address (Optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter customer address" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <FormField
           control={form.control}
