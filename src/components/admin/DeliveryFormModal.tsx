@@ -66,8 +66,7 @@ export const DeliveryFormModal = ({ isOpen, onClose, booking, deliveryForm, onSu
     try {
       // Update vehicle mileage if provided
       if (data.mileage_reading && booking?.vehicle_id) {
-        await updateVehicle({
-          id: booking.vehicle_id,
+        await updateVehicle(booking.vehicle_id, {
           mileage: data.mileage_reading
         });
       }
