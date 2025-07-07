@@ -1,8 +1,9 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Plus, X, Upload, AlertCircle } from 'lucide-react';
+import { Plus, X, Upload, AlertCircle, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { useVehicles } from '@/hooks/useVehicles';
 
@@ -223,7 +224,8 @@ export const ImageGallery = ({
                 >
                   <X className="w-3 h-3" />
                 </Button>
-                <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                  {index === 0 && <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />}
                   {index + 1}
                 </div>
               </div>
@@ -263,7 +265,7 @@ export const ImageGallery = ({
       
       {images.length > 1 && (
         <div className="text-xs text-muted-foreground">
-          💡 Drag and drop images to reorder them
+          💡 Drag and drop images to reorder them. The first image <Star className="w-3 h-3 inline fill-yellow-400 text-yellow-400" /> will be the default.
         </div>
       )}
     </div>

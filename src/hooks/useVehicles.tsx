@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,6 +29,7 @@ export interface VehicleImage {
   vehicle_id: string;
   image_url: string;
   display_order: number;
+  is_default: boolean;
   created_at: string;
 }
 
@@ -50,6 +52,7 @@ export const useVehicles = () => {
             vehicle_id,
             image_url,
             display_order,
+            is_default,
             created_at
           )
         `)
@@ -105,7 +108,8 @@ export const useVehicles = () => {
         const imageRecords = images.map((imageUrl: string, index: number) => ({
           vehicle_id: newVehicle.id,
           image_url: imageUrl,
-          display_order: index
+          display_order: index,
+          // The trigger will automatically set is_default for the first image
         }));
 
         console.log('Inserting image records:', imageRecords);
@@ -170,7 +174,8 @@ export const useVehicles = () => {
           const imageRecords = images.map((imageUrl: string, index: number) => ({
             vehicle_id: id,
             image_url: imageUrl,
-            display_order: index
+            display_order: index,
+            // The trigger will automatically set is_default for the first image
           }));
 
           const { error: imagesError } = await supabase
@@ -284,6 +289,29 @@ export const useVehicles = () => {
     }
   };
 
+  const setDefaultImage = async (imageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('vehicle_images')
+        .update({ is_default: true })
+        .eq('id', imageId);
+
+      if (error) {
+        console.error('Error setting default image:', error);
+        toast.error('Failed to set default image');
+        return false;
+      }
+
+      toast.success('Default image updated');
+      await fetchVehicles(); // Refresh the list
+      return true;
+    } catch (error) {
+      console.error('Error setting default image:', error);
+      toast.error('Failed to set default image');
+      return false;
+    }
+  };
+
   useEffect(() => {
     if (profile?.role === 'admin') {
       fetchVehicles();
@@ -299,5 +327,6 @@ export const useVehicles = () => {
     deleteVehicle,
     uploadVehicleImage,
     deleteVehicleImage,
+    setDefaultImage,
   };
 };
