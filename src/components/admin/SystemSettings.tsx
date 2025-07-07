@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Globe, DollarSign, Bell, Shield, MapPin, Clock } from 'lucide-react';
+import { Settings, DollarSign, Shield, MapPin, Clock } from 'lucide-react';
 
 const locations = [
   { id: 1, name: 'Downtown Branch', address: '123 Main St, City Center', status: 'active' },
@@ -19,8 +19,6 @@ export const SystemSettings = () => {
   const [minAge, setMinAge] = useState('21');
   const [maxMileage, setMaxMileage] = useState('200');
   const [cancellationHours, setCancellationHours] = useState('24');
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [smsNotifications, setSmsNotifications] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   return (
@@ -78,32 +76,6 @@ export const SystemSettings = () => {
               />
             </div>
           </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Late Return Grace Period</Label>
-                <p className="text-sm text-muted-foreground">Allow 1 hour grace period before charging late fees</p>
-              </div>
-              <Switch defaultChecked />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Require ID Verification</Label>
-                <p className="text-sm text-muted-foreground">Mandate government ID verification for all rentals</p>
-              </div>
-              <Switch defaultChecked />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Allow Modifications</Label>
-                <p className="text-sm text-muted-foreground">Enable customers to modify bookings online</p>
-              </div>
-              <Switch defaultChecked />
-            </div>
-          </div>
         </CardContent>
       </Card>
 
@@ -158,96 +130,6 @@ export const SystemSettings = () => {
             <div>
               <Label>Security Deposit ($)</Label>
               <Input type="number" defaultValue="200" className="mt-1" />
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Weekend Premium</Label>
-                <p className="text-sm text-muted-foreground">Apply 20% surcharge on weekends</p>
-              </div>
-              <Switch defaultChecked />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Holiday Pricing</Label>
-                <p className="text-sm text-muted-foreground">Enable special holiday pricing rules</p>
-              </div>
-              <Switch />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Dynamic Pricing</Label>
-                <p className="text-sm text-muted-foreground">Adjust prices based on demand and availability</p>
-              </div>
-              <Switch />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Notification Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Bell className="w-5 h-5 mr-2" />
-            Notification Settings
-          </CardTitle>
-          <CardDescription>Configure customer and admin notification preferences</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-4">
-              <h4 className="font-medium">Customer Notifications</h4>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>Email Notifications</Label>
-                  <Switch 
-                    checked={emailNotifications}
-                    onCheckedChange={setEmailNotifications}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>SMS Notifications</Label>
-                  <Switch 
-                    checked={smsNotifications}
-                    onCheckedChange={setSmsNotifications}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>Booking Confirmations</Label>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>Pickup Reminders</Label>
-                  <Switch defaultChecked />
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <h4 className="font-medium">Admin Notifications</h4>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>New Bookings</Label>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>Payment Failures</Label>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>Maintenance Alerts</Label>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>System Issues</Label>
-                  <Switch defaultChecked />
-                </div>
-              </div>
             </div>
           </div>
         </CardContent>
