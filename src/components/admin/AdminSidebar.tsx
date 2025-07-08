@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -9,8 +8,6 @@ import {
   CreditCard,
   BarChart3,
   Settings,
-  HelpCircle,
-  Percent,
   Tag
 } from 'lucide-react';
 
@@ -22,9 +19,7 @@ const navItems = [
   { to: '/admin/customers', icon: Users, label: 'Customers' },
   { to: '/admin/payments', icon: CreditCard, label: 'Payments' },
   { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
-  { to: '/admin/promotions', icon: Percent, label: 'Promotions' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
-  { to: '/admin/support', icon: HelpCircle, label: 'Support' },
 ];
 
 export const AdminSidebar = () => {

@@ -10,8 +10,6 @@ import { CustomerManagement } from '@/components/admin/CustomerManagement';
 import { PaymentsInvoicing } from '@/components/admin/PaymentsInvoicing';
 import { ReportsAnalytics } from '@/components/admin/ReportsAnalytics';
 import { SystemSettings } from '@/components/admin/SystemSettings';
-import { SupportHelpdesk } from '@/components/admin/SupportHelpdesk';
-import { PromotionsDiscounts } from '@/components/admin/PromotionsDiscounts';
 
 export default function AdminDashboard() {
   return (
@@ -28,8 +26,6 @@ export default function AdminDashboard() {
             <Route path="payments" element={<PaymentsInvoicing />} />
             <Route path="reports" element={<ReportsAnalytics />} />
             <Route path="settings" element={<SystemSettings />} />
-            <Route path="support" element={<SupportHelpdesk />} />
-            <Route path="promotions" element={<PromotionsDiscounts />} />
           </Routes>
         </div>
       </main>
