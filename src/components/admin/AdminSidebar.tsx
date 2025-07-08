@@ -1,96 +1,60 @@
 
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Car, 
-  Calendar, 
-  Users, 
-  CreditCard, 
-  BarChart3, 
+  Calendar,
+  Users,
+  CreditCard,
+  BarChart3,
   Settings,
-  LogOut 
+  HelpCircle,
+  Percent,
+  Tag
 } from 'lucide-react';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
-} from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/useAuth';
-import { AdminView } from '@/pages/AdminDashboard';
 
-interface AdminSidebarProps {
-  currentView: AdminView;
-  onViewChange: (view: AdminView) => void;
-}
+const navItems = [
+  { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
+  { to: '/admin/fleet', icon: Car, label: 'Fleet Management' },
+  { to: '/admin/categories', icon: Tag, label: 'Categories' },
+  { to: '/admin/bookings', icon: Calendar, label: 'Bookings' },
+  { to: '/admin/customers', icon: Users, label: 'Customers' },
+  { to: '/admin/payments', icon: CreditCard, label: 'Payments' },
+  { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
+  { to: '/admin/promotions', icon: Percent, label: 'Promotions' },
+  { to: '/admin/settings', icon: Settings, label: 'Settings' },
+  { to: '/admin/support', icon: HelpCircle, label: 'Support' },
+];
 
-const menuItems = [
-  { id: 'overview', label: 'Dashboard Overview', icon: LayoutDashboard },
-  { id: 'fleet', label: 'Fleet Management', icon: Car },
-  { id: 'bookings', label: 'Booking Management', icon: Calendar },
-  { id: 'customers', label: 'Customer Management', icon: Users },
-  { id: 'payments', label: 'Payments & Invoicing', icon: CreditCard },
-  { id: 'analytics', label: 'Reports & Analytics', icon: BarChart3 },
-  { id: 'settings', label: 'System Settings', icon: Settings },
-] as const;
-
-export const AdminSidebar = ({ currentView, onViewChange }: AdminSidebarProps) => {
-  const { signOut } = useAuth();
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
+export const AdminSidebar = () => {
   return (
-    <Sidebar className="w-64 border-r">
-      <SidebarHeader>
-        <div className="flex items-center space-x-2 px-4 py-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <Car className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-lg font-bold">RentEasy Admin</span>
-        </div>
-      </SidebarHeader>
+    <aside className="w-64 bg-white shadow-sm border-r">
+      <div className="p-6">
+        <h2 className="text-xl font-bold text-gray-800">Admin Panel</h2>
+      </div>
       
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton
-                    isActive={currentView === item.id}
-                    onClick={() => onViewChange(item.id as AdminView)}
-                    className="w-full justify-start"
-                  >
-                    <item.icon className="w-4 h-4 mr-3" />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter>
-        <div className="p-4">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-gray-700 hover:bg-gray-100"
-            onClick={handleSignOut}
-          >
-            <LogOut className="w-4 h-4 mr-3" />
-            Sign Out
-          </Button>
+      <nav className="mt-6">
+        <div className="px-3">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) =>
+                `flex items-center px-3 py-2 rounded-md text-sm font-medium mb-1 transition-colors ${
+                  isActive
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`
+              }
+            >
+              <item.icon className="mr-3 h-5 w-5" />
+              {item.label}
+            </NavLink>
+          ))}
         </div>
-      </SidebarFooter>
-    </Sidebar>
+      </nav>
+    </aside>
   );
 };
