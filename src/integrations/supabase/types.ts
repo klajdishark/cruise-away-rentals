@@ -168,6 +168,163 @@ export type Database = {
           },
         ]
       }
+      contract_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          template_content: string
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          template_content: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          template_content?: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Relationships: []
+      }
+      contract_versions: {
+        Row: {
+          changes_summary: string | null
+          content: string
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          version: number
+        }
+        Insert: {
+          changes_summary?: string | null
+          content: string
+          contract_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          version: number
+        }
+        Update: {
+          changes_summary?: string | null
+          content?: string
+          contract_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_versions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          admin_signature: string | null
+          admin_signed_at: string | null
+          booking_id: string
+          content: string
+          contract_number: string
+          created_at: string
+          customer_signature: string | null
+          customer_signed_at: string | null
+          id: string
+          metadata: Json | null
+          pdf_url: string | null
+          signed_by: string | null
+          status: string
+          template_id: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          admin_signature?: string | null
+          admin_signed_at?: string | null
+          booking_id: string
+          content: string
+          contract_number: string
+          created_at?: string
+          customer_signature?: string | null
+          customer_signed_at?: string | null
+          id?: string
+          metadata?: Json | null
+          pdf_url?: string | null
+          signed_by?: string | null
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          admin_signature?: string | null
+          admin_signed_at?: string | null
+          booking_id?: string
+          content?: string
+          contract_number?: string
+          created_at?: string
+          customer_signature?: string | null
+          customer_signed_at?: string | null
+          id?: string
+          metadata?: Json | null
+          pdf_url?: string | null
+          signed_by?: string | null
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_signed_by_fkey"
+            columns: ["signed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "contract_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_documents: {
         Row: {
           created_at: string
@@ -516,6 +673,10 @@ export type Database = {
           p_exclude_booking_id?: string
         }
         Returns: boolean
+      }
+      generate_contract_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       has_role: {
         Args: {

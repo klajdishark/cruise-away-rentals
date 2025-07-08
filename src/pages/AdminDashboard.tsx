@@ -6,6 +6,7 @@ import { DashboardOverview } from '@/components/admin/DashboardOverview';
 import { FleetManagement } from '@/components/admin/FleetManagement';
 import { CategoryManagement } from '@/components/admin/CategoryManagement';
 import { BookingManagement } from '@/components/admin/BookingManagement';
+import { ContractManagement } from '@/components/admin/ContractManagement';
 import { CustomerManagement } from '@/components/admin/CustomerManagement';
 import { PaymentsInvoicing } from '@/components/admin/PaymentsInvoicing';
 import { ReportsAnalytics } from '@/components/admin/ReportsAnalytics';
@@ -22,6 +23,7 @@ export default function AdminDashboard() {
             <Route path="fleet" element={<FleetManagement />} />
             <Route path="categories" element={<CategoryManagement />} />
             <Route path="bookings" element={<BookingManagement />} />
+            <Route path="contracts" element={<ContractManagement />} />
             <Route path="customers" element={<CustomerManagement />} />
             <Route path="payments" element={<PaymentsInvoicing />} />
             <Route path="reports" element={<ReportsAnalytics />} />

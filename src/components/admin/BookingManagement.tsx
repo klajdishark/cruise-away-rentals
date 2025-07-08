@@ -117,6 +117,11 @@ export const BookingManagement = () => {
     createOrUpdateBookingForm(formData);
   };
 
+  const handleCreateContract = (booking: any) => {
+    // Navigate to contracts page or open modal
+    console.log('Creating contract for booking:', booking.id);
+  };
+
   const confirmDelete = () => {
     if (bookingToDelete) {
       deleteBooking(bookingToDelete);
@@ -373,6 +378,18 @@ export const BookingManagement = () => {
                             onClick={() => handleOpenDeliveryForm(booking)}
                             disabled={isUpdatingForm}
                             title={hasDeliveryForm ? 'Complete Delivery Form' : 'Create Delivery Form'}
+                          >
+                            <FileText className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {/* Show contract creation button for confirmed bookings */}
+                        {booking.status === 'confirmed' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-purple-600"
+                            onClick={() => handleCreateContract(booking)}
+                            title="Create Contract"
                           >
                             <FileText className="w-4 h-4" />
                           </Button>
