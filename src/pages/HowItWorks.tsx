@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Search, Calendar, Car, CreditCard, MapPin, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export const uploadContractPDF = async (pdfBlob: Blob, contractId: string, contractNumber: string) => {
