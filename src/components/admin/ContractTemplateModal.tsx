@@ -22,6 +22,7 @@ import {
   FormDescription,
 } from '@/components/ui/form';
 import { RichTextEditor } from './RichTextEditor';
+import { ContractTemplatePreview } from './ContractTemplatePreview';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
@@ -48,6 +49,7 @@ export const ContractTemplateModal = ({
 }: ContractTemplateModalProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
 
   const form = useForm<TemplateFormData>({
     resolver: zodResolver(templateSchema),
@@ -128,31 +130,68 @@ export const ContractTemplateModal = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {template ? 'Edit Contract Template' : 'Create New Contract Template'}
-          </DialogTitle>
-          <DialogDescription>
-            {template 
-              ? 'Update the contract template information below.' 
-              : 'Create a new contract template with placeholders.'
-            }
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {template ? 'Edit Contract Template' : 'Create New Contract Template'}
+            </DialogTitle>
+            <DialogDescription>
+              {template 
+                ? 'Update the contract template information below.' 
+                : 'Create a new contract template with placeholders.'
+              }
+            </DialogDescription>
+          </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Template Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Standard Rental Agreement" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">Active Template</FormLabel>
+                        <FormDescription>
+                          Enable this template for use in contract generation
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
-                name="name"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Template Name</FormLabel>
+                    <FormLabel>Description (Optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Standard Rental Agreement" {...field} />
+                      <Input placeholder="Brief description of this template" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -161,72 +200,52 @@ export const ContractTemplateModal = ({
 
               <FormField
                 control={form.control}
-                name="is_active"
+                name="template_content"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Active Template</FormLabel>
-                      <FormDescription>
-                        Enable this template for use in contract generation
-                      </FormDescription>
-                    </div>
+                  <FormItem>
+                    <FormLabel>Template Content</FormLabel>
+                    <FormDescription>
+                      Write your contract template using HTML. Use placeholders like {'{{customer_name}}'} for dynamic content.
+                    </FormDescription>
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
+                      <RichTextEditor
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Enter your contract template with HTML formatting and placeholders..."
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Brief description of this template" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <div className="flex justify-between">
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={() => setIsPreviewOpen(true)}
+                >
+                  Preview Template
+                </Button>
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={handleClose}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    {template ? 'Update Template' : 'Create Template'}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
-            <FormField
-              control={form.control}
-              name="template_content"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Template Content</FormLabel>
-                  <FormDescription>
-                    Write your contract template using HTML. Use placeholders like {'{{customer_name}}'} for dynamic content.
-                  </FormDescription>
-                  <FormControl>
-                    <RichTextEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Enter your contract template with HTML formatting and placeholders..."
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={handleClose}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                {template ? 'Update Template' : 'Create Template'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+      <ContractTemplatePreview
+        content={form.watch('template_content')}
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+      />
+    </>
   );
 };
