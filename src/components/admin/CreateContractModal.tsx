@@ -61,7 +61,11 @@ export const CreateContractModal = ({
   });
 
   const handleSubmit = (data: CreateContractFormData) => {
-    onSubmit(data);
+    const processedData = {
+      ...data,
+      templateId: data.templateId === 'default' ? undefined : data.templateId
+    };
+    onSubmit(processedData);
     onClose();
   };
 
@@ -108,7 +112,7 @@ export const CreateContractModal = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Use Default Template</SelectItem>
+                        <SelectItem value="default">Use Default Template</SelectItem>
                         {templates.filter(t => t.is_active).map((template) => (
                           <SelectItem key={template.id} value={template.id}>
                             {template.name}

@@ -90,7 +90,11 @@ export const ContractModal = ({
   }, [contract, form]);
 
   const handleSubmit = (data: ContractFormData) => {
-    onSubmit(data);
+    const processedData = {
+      ...data,
+      template_id: data.template_id === 'none' ? undefined : data.template_id
+    };
+    onSubmit(processedData);
     onClose();
   };
 
@@ -160,7 +164,7 @@ export const ContractModal = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">No Template</SelectItem>
+                        <SelectItem value="none">No Template</SelectItem>
                         {templates.map((template) => (
                           <SelectItem key={template.id} value={template.id}>
                             {template.name}

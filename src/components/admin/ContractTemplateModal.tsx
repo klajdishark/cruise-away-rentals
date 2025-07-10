@@ -97,7 +97,12 @@ export const ContractTemplateModal = ({
         // Create new template
         const { error } = await supabase
           .from('contract_templates')
-          .insert(data);
+          .insert({
+            name: data.name,
+            description: data.description || null,
+            template_content: data.template_content,
+            is_active: data.is_active
+          });
 
         if (error) throw error;
 
