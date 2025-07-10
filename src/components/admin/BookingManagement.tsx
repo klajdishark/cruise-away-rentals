@@ -9,8 +9,10 @@ import { BookingModal } from './BookingModal';
 import { CalendarView } from './CalendarView';
 import { DeliveryFormModal } from './DeliveryFormModal';
 import { BookingReviewModal } from './BookingReviewModal';
+import { CreateContractModal } from './CreateContractModal';
 import { useBookings } from '@/hooks/useBookings';
 import { useBookingForms } from '@/hooks/useBookingForms';
+import { useContracts } from '@/hooks/useContracts';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,6 +61,8 @@ export const BookingManagement = () => {
     isUpdating: isUpdatingForm
   } = useBookingForms();
 
+  const { createContractForBooking, isCreatingForBooking } = useContracts();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -70,6 +74,8 @@ export const BookingManagement = () => {
   const [selectedDeliveryBooking, setSelectedDeliveryBooking] = useState<any | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedReviewBooking, setSelectedReviewBooking] = useState<any | null>(null);
+  const [isCreateContractOpen, setIsCreateContractOpen] = useState(false);
+  const [selectedContractBooking, setSelectedContractBooking] = useState<any | null>(null);
 
   // Debug logging to help identify issues
   console.log('Booking forms loaded:', bookingForms);
@@ -118,8 +124,20 @@ export const BookingManagement = () => {
   };
 
   const handleCreateContract = (booking: any) => {
-    // Navigate to contracts page or open modal
-    console.log('Creating contract for booking:', booking.id);
+    setSelectedContractBooking(booking);
+    setIsCreateContractOpen(true);
+  };
+
+  const handleCreateContractSubmit = (data: { templateId?: string; autoGeneratePDF: boolean }) => {
+    if (selectedContractBooking) {
+      createContractForBooking({
+        bookingId: selectedContractBooking.id,
+        templateId: data.templateId,
+        autoGeneratePDF: data.autoGeneratePDF
+      });
+      setIsCreateContractOpen(false);
+      setSelectedContractBooking(null);
+    }
   };
 
   const confirmDelete = () => {
@@ -283,7 +301,6 @@ export const BookingManagement = () => {
                 const hasDeliveryForm = !!deliveryForm;
                 const isDeliveryFormCompleted = deliveryForm?.completed_at;
                 
-                // Debug logging for each booking
                 console.log(`Booking ${booking.id}:`, {
                   status: booking.status,
                   hasDeliveryForm,
@@ -369,7 +386,6 @@ export const BookingManagement = () => {
                             </Button>
                           </>
                         )}
-                        {/* Show delivery form button for completed bookings only if not completed */}
                         {booking.status === 'completed' && !isDeliveryFormCompleted && (
                           <Button
                             variant="outline"
@@ -382,13 +398,13 @@ export const BookingManagement = () => {
                             <FileText className="w-4 h-4" />
                           </Button>
                         )}
-                        {/* Show contract creation button for confirmed bookings */}
-                        {booking.status === 'confirmed' && (
+                        {(booking.status === 'confirmed' || booking.status === 'active') && (
                           <Button
                             variant="outline"
                             size="sm"
                             className="text-purple-600"
                             onClick={() => handleCreateContract(booking)}
+                            disabled={isCreatingForBooking}
                             title="Create Contract"
                           >
                             <FileText className="w-4 h-4" />
@@ -424,6 +440,13 @@ export const BookingManagement = () => {
         onClose={() => setIsReviewModalOpen(false)}
         booking={selectedReviewBooking}
         deliveryForm={selectedReviewBooking ? getDeliveryForm(selectedReviewBooking.id) : undefined}
+      />
+
+      <CreateContractModal
+        isOpen={isCreateContractOpen}
+        onClose={() => setIsCreateContractOpen(false)}
+        booking={selectedContractBooking}
+        onSubmit={handleCreateContractSubmit}
       />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

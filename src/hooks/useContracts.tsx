@@ -1,9 +1,10 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import { generateContractPDF } from '@/utils/pdfGenerator';
+import { uploadContractPDF } from '@/utils/contractPdfStorage';
 
 type Contract = Tables<'contracts'>;
 type ContractTemplate = Tables<'contract_templates'>;
@@ -257,37 +258,98 @@ export const useContracts = () => {
     }
   });
 
-  // Generate PDF mutation
+  // Enhanced PDF generation mutation
   const generatePDFMutation = useMutation({
     mutationFn: async (contractId: string) => {
-      // This would integrate with a PDF generation service
-      // For now, we'll just update the status
-      const { data, error } = await supabase
+      // Get the contract with all related data
+      const { data: contract, error: contractError } = await supabase
         .from('contracts')
-        .update({ status: 'pending_signature' })
+        .select(`
+          *,
+          bookings (
+            *,
+            customers (*),
+            vehicles (*)
+          )
+        `)
+        .eq('id', contractId)
+        .single();
+
+      if (contractError || !contract) {
+        throw new Error('Failed to fetch contract details');
+      }
+
+      // Generate PDF from contract content
+      const pdfBlob = await generateContractPDF(contract.content, contract.contract_number);
+
+      // Upload PDF to storage
+      const { publicUrl } = await uploadContractPDF(pdfBlob, contractId, contract.contract_number);
+
+      // Update contract with PDF URL and status
+      const { data: updatedContract, error: updateError } = await supabase
+        .from('contracts')
+        .update({ 
+          pdf_url: publicUrl,
+          status: 'pending_signature',
+          version: contract.version + 1
+        })
         .eq('id', contractId)
         .select()
         .single();
 
-      if (error) {
-        console.error('Error generating PDF:', error);
-        throw error;
+      if (updateError) {
+        throw updateError;
       }
 
-      return data;
+      return updatedContract;
     },
-    onSuccess: () => {
+    onSuccess: (updatedContract) => {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       toast({
-        title: "PDF Generated",
-        description: "Contract PDF has been generated and is ready for signature.",
+        title: "PDF Generated Successfully",
+        description: `Contract ${updatedContract.contract_number} is ready for signature.`,
       });
     },
     onError: (error: any) => {
       toast({
         variant: "destructive",
         title: "Error Generating PDF",
-        description: error.message || "Failed to generate PDF",
+        description: error.message || "Failed to generate contract PDF",
+      });
+    }
+  });
+
+  // Auto-generate contract for booking
+  const createContractForBooking = useMutation({
+    mutationFn: async (data: {
+      bookingId: string;
+      templateId?: string;
+      autoGeneratePDF?: boolean;
+    }) => {
+      // First create the contract
+      const contractData = await createContractMutation.mutateAsync({
+        booking_id: data.bookingId,
+        template_id: data.templateId
+      });
+
+      // Auto-generate PDF if requested
+      if (data.autoGeneratePDF && contractData) {
+        await generatePDFMutation.mutateAsync(contractData.id);
+      }
+
+      return contractData;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Contract Created",
+        description: "Contract has been created and PDF generated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Error Creating Contract",
+        description: error.message || "Failed to create contract",
       });
     }
   });
@@ -302,9 +364,11 @@ export const useContracts = () => {
     updateContract: updateContractMutation.mutate,
     deleteContract: deleteContractMutation.mutate,
     generatePDF: generatePDFMutation.mutate,
+    createContractForBooking: createContractForBooking.mutate,
     isCreating: createContractMutation.isPending,
     isUpdating: updateContractMutation.isPending,
     isDeleting: deleteContractMutation.isPending,
     isGeneratingPDF: generatePDFMutation.isPending,
+    isCreatingForBooking: createContractForBooking.isPending,
   };
 };
