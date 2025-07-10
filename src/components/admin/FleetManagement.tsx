@@ -9,6 +9,7 @@ import { useFleetStats } from '@/hooks/useFleetStats';
 import { useVehicleTable } from '@/hooks/useVehicleTable';
 import { useVehicleActions } from '@/hooks/useVehicleActions';
 import { Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 export const FleetManagement = () => {
   const { vehicles, loading } = useVehicles();
@@ -43,12 +44,51 @@ export const FleetManagement = () => {
         </Button>
       </div>
 
-      {/* Stats Cards - Will be extracted in Phase 2 */}
+      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        {/* ... existing stats cards implementation ... */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Vehicles</CardTitle>
+            <Car className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalVehicles}</div>
+            <p className="text-xs text-muted-foreground">All vehicles in fleet</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Available</CardTitle>
+            <Settings className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.available}</div>
+            <p className="text-xs text-muted-foreground">Ready for rental</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Rented</CardTitle>
+            <Car className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.rented}</div>
+            <p className="text-xs text-muted-foreground">Currently rented</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Maintenance</CardTitle>
+            <Settings className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.maintenance}</div>
+            <p className="text-xs text-muted-foreground">In service</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Vehicle Table - Will be extracted in Phase 2 */}
+      {/* Vehicle Table */}
       <Card>
         <CardHeader>
           <CardTitle>Vehicle Inventory</CardTitle>
@@ -73,7 +113,55 @@ export const FleetManagement = () => {
           </div>
 
           <Table>
-            {/* ... existing table implementation ... */}
+            <TableHeader>
+              <TableRow>
+                <TableHead>Make & Model</TableHead>
+                <TableHead>Year</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Mileage</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredVehicles.map((vehicle) => (
+                <TableRow key={vehicle.id}>
+                  <TableCell className="font-medium">
+                    {vehicle.brand} {vehicle.model}
+                  </TableCell>
+                  <TableCell>{vehicle.year}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      vehicle.status === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : vehicle.status === 'rented'
+                        ? 'bg-blue-100 text-blue-800'
+                        : vehicle.status === 'maintenance'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {vehicle.status}
+                    </span>
+                  </TableCell>
+                  <TableCell>${vehicle.price}/day</TableCell>
+                  <TableCell>{vehicle.location}</TableCell>
+                  <TableCell>{vehicle.mileage.toLocaleString()} mi</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditingVehicle(vehicle);
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
           </Table>
         </CardContent>
       </Card>
