@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import {
   Form,
@@ -23,6 +22,7 @@ import {
   FormMessage,
   FormDescription,
 } from '@/components/ui/form';
+import { RichTextEditor } from './RichTextEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
@@ -206,10 +206,10 @@ export const ContractTemplateModal = ({
                     Write your contract template using HTML. Use placeholders like {'{{customer_name}}'} for dynamic content.
                   </FormDescription>
                   <FormControl>
-                    <Textarea
+                    <RichTextEditor
+                      value={field.value}
+                      onChange={field.onChange}
                       placeholder="Enter your contract template with HTML formatting and placeholders..."
-                      className="min-h-[300px] font-mono text-sm"
-                      {...field}
                     />
                   </FormControl>
                   <FormMessage />

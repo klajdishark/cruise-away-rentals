@@ -156,8 +156,26 @@ export const BookingManagement = () => {
     }
   };
 
-  const handleApprove = (id: string) => {
+  const handleApprove = async (id: string) => {
+    // Update booking status to confirmed
     updateBooking({ id, status: 'confirmed' });
+    
+    // Automatically create a contract for the confirmed booking
+    // Find the booking to get its details
+    const booking = bookings.find(b => b.id === id);
+    if (booking) {
+      try {
+        // Create contract with default template and auto-generate PDF
+        createContractForBooking({
+          bookingId: id,
+          templateId: undefined, // Use default template
+          autoGeneratePDF: true
+        });
+      } catch (error) {
+        console.error('Failed to create contract automatically:', error);
+        // Don't block the approval process if contract creation fails
+      }
+    }
   };
 
   const handleReject = (id: string) => {

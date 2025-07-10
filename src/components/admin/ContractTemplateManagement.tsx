@@ -19,9 +19,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const ContractTemplateManagement = () => {
   const { templates, isLoadingTemplates } = useContracts();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<any | undefined>();
@@ -50,10 +55,30 @@ export const ContractTemplateManagement = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (templateToDelete) {
-      // Delete template logic would go here
-      console.log('Deleting template:', templateToDelete);
+      try {
+        const { error } = await supabase
+          .from('contract_templates')
+          .delete()
+          .eq('id', templateToDelete);
+
+        if (error) throw error;
+
+        toast({
+          title: "Template Deleted",
+          description: "Contract template has been successfully deleted.",
+        });
+        
+        // Invalidate queries to refresh the list
+        queryClient.invalidateQueries({ queryKey: ['contract-templates'] });
+      } catch (error: any) {
+        toast({
+          variant: "destructive", 
+          title: "Error",
+          description: error.message || "Failed to delete template",
+        });
+      }
       setTemplateToDelete(null);
     }
     setIsDeleteDialogOpen(false);
