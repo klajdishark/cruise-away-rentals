@@ -174,155 +174,69 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          is_current_version: boolean
           name: string
           template_content: string
           updated_at: string
-          variables: Json | null
         }
         Insert: {
           created_at?: string
           description?: string | null
           id?: string
           is_active?: boolean
+          is_current_version?: boolean
           name: string
           template_content: string
           updated_at?: string
-          variables?: Json | null
         }
         Update: {
           created_at?: string
           description?: string | null
           id?: string
           is_active?: boolean
+          is_current_version?: boolean
           name?: string
           template_content?: string
           updated_at?: string
-          variables?: Json | null
         }
         Relationships: []
       }
-      contract_versions: {
+      contract_template_versions: {
         Row: {
-          changes_summary: string | null
-          content: string
-          contract_id: string
-          created_at: string
-          created_by: string | null
           id: string
-          version: number
+          template_id: string
+          content: string
+          created_at: string
+          is_current_version: boolean
+          title: string
+          description: string
         }
         Insert: {
-          changes_summary?: string | null
-          content: string
-          contract_id: string
-          created_at?: string
-          created_by?: string | null
           id?: string
-          version: number
+          template_id: string
+          content: string
+          created_at?: string
+          is_current_version?: boolean
+          title: string
+          description: string
         }
         Update: {
-          changes_summary?: string | null
-          content?: string
-          contract_id?: string
-          created_at?: string
-          created_by?: string | null
           id?: string
-          version?: number
+          template_id?: string
+          content?: string
+          created_at?: string
+          is_current_version?: boolean
+          title?: string
+          description?: string
         }
         Relationships: [
           {
-            foreignKeyName: "contract_versions_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contract_versions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      contracts: {
-        Row: {
-          admin_signature: string | null
-          admin_signed_at: string | null
-          booking_id: string
-          content: string
-          contract_number: string
-          created_at: string
-          customer_signature: string | null
-          customer_signed_at: string | null
-          id: string
-          metadata: Json | null
-          pdf_url: string | null
-          signed_by: string | null
-          status: string
-          template_id: string | null
-          updated_at: string
-          version: number
-        }
-        Insert: {
-          admin_signature?: string | null
-          admin_signed_at?: string | null
-          booking_id: string
-          content: string
-          contract_number: string
-          created_at?: string
-          customer_signature?: string | null
-          customer_signed_at?: string | null
-          id?: string
-          metadata?: Json | null
-          pdf_url?: string | null
-          signed_by?: string | null
-          status?: string
-          template_id?: string | null
-          updated_at?: string
-          version?: number
-        }
-        Update: {
-          admin_signature?: string | null
-          admin_signed_at?: string | null
-          booking_id?: string
-          content?: string
-          contract_number?: string
-          created_at?: string
-          customer_signature?: string | null
-          customer_signed_at?: string | null
-          id?: string
-          metadata?: Json | null
-          pdf_url?: string | null
-          signed_by?: string | null
-          status?: string
-          template_id?: string | null
-          updated_at?: string
-          version?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contracts_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contracts_signed_by_fkey"
-            columns: ["signed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contracts_template_id_fkey"
+            foreignKeyName: "contract_template_versions_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "contract_templates"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       customer_documents: {
@@ -684,6 +598,32 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      restore_contract_version: {
+        Args: {
+          template_id: string
+          version_id: string
+        }
+        Returns: undefined
+      }
+      create_new_template_version: {
+        Args: {
+          template_id: string
+          new_name: string
+          new_description: string | null
+          new_content: string
+          new_is_active: boolean
+        }
+        Returns: {
+          id: string
+          name: string
+          description: string | null
+          template_content: string
+          is_active: boolean
+          is_current_version: boolean
+          created_at: string
+          updated_at: string
+        }[]
       }
     }
     Enums: {

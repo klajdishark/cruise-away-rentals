@@ -1,0 +1,30 @@
+/* Remove all borders from Quill editor */
+.ql-toolbar {
+  border: none !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  background: #f8fafc !important;
+  border-radius: 0.375rem 0.375rem 0 0 !important;
+}
+
+.ql-container {
+  border: none !important;
+  background: #ffffff !important;
+  border-radius: 0 0 0.375rem 0.375rem !important;
+}
+
+.ql-editor {
+  padding: 1rem !important;
+}
+
+/* Remove focus border */
+.ql-container.ql-snow:focus,
+.ql-container.ql-snow:hover {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Style the placeholder text */
+.ql-editor.ql-blank::before {
+  color: #94a3b8 !important;
+  font-style: normal !important;
+}

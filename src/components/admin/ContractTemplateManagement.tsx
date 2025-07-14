@@ -1,233 +1,229 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Plus, Edit, Trash2, Eye, ToggleLeft, ToggleRight } from 'lucide-react';
-import { ContractTemplateModal } from './ContractTemplateModal';
-import { useContracts } from '@/hooks/useContracts';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { format } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useQueryClient } from '@tanstack/react-query';
+import React, {useState} from 'react';
+import {useQuery} from '@tanstack/react-query';
+import {supabase} from '@/integrations/supabase/client';
+import {Button} from '@/components/ui/button';
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
+import {Edit, History, Plus, Trash2} from 'lucide-react';
+import {Switch} from '@/components/ui/switch';
+import {Link} from 'react-router-dom';
+import {useToast} from '@/hooks/use-toast';
+import {TemplateVersionsModal} from './TemplateVersionsModal';
+
+type ContractTemplate = {
+    id: string;
+    name: string;
+    description: string | null;
+    template_content: string;
+    is_active: boolean;
+    is_current_version: boolean;
+    version_number: number;
+    parent_id: string | null;
+    created_at: string;
+    updated_at: string;
+};
 
 export const ContractTemplateManagement = () => {
-  const { templates, isLoadingTemplates } = useContracts();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<any | undefined>();
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
+    const {toast} = useToast();
+    const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+    const [showVersionsModal, setShowVersionsModal] = useState(false);
 
-  const filteredTemplates = templates.filter(template => {
-    const name = template.name || '';
-    const description = template.description || '';
-    return name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      description.toLowerCase().includes(searchTerm.toLowerCase());
-  });
+    const {data: templates, isLoading, refetch} = useQuery({
+        queryKey: ['contract-templates'],
+        queryFn: async (): Promise<ContractTemplate[]> => {
+            try {
+                // First try querying with all fields
+                let {data, error} = await supabase
+                    .from('contract_templates')
+                    .select('*')
+                    .eq('is_current_version', true)
+                    .order('created_at', {ascending: false});
 
-  const handleCreateTemplate = () => {
-    setSelectedTemplate(undefined);
-    setIsModalOpen(true);
-  };
+                if (error) {
+                    // If that fails, try with minimal required fields
+                    const fallback = await supabase
+                        .from('contract_templates')
+                        .select('id, name, is_active, created_at, is_current_version')
+                        .order('created_at', {ascending: false});
 
-  const handleEditTemplate = (template: any) => {
-    setSelectedTemplate(template);
-    setIsModalOpen(true);
-  };
+                    if (fallback.error) throw fallback.error;
 
-  const handleDeleteTemplate = (id: string) => {
-    setTemplateToDelete(id);
-    setIsDeleteDialogOpen(true);
-  };
+                    return fallback.data?.map(t => ({
+                        id: t.id,
+                        name: t.name,
+                        description: null,
+                        template_content: '',
+                        is_active: t.is_active,
+                        is_current_version: t.is_current_version || true,
+                        version_number: 1,
+                        parent_id: null,
+                        created_at: t.created_at,
+                        updated_at: t.created_at
+                    })) || [];
+                }
 
-  const confirmDelete = async () => {
-    if (templateToDelete) {
-      try {
-        const { error } = await supabase
-          .from('contract_templates')
-          .delete()
-          .eq('id', templateToDelete);
+                return data?.map(t => {
+                    const template: Partial<ContractTemplate> = {
+                        id: t.id,
+                        name: t.name,
+                        description: t.description || null,
+                        template_content: t.template_content || '',
+                        is_active: t.is_active || false,
+                        created_at: t.created_at,
+                        updated_at: t.updated_at || t.created_at
+                    };
 
-        if (error) throw error;
+                    // Add optional fields if they exist with proper typing
+                    if ('is_current_version' in t) template.is_current_version = Boolean(t.is_current_version);
+                    if ('version_number' in t) template.version_number = Number(t.version_number) || 1;
+                    if ('parent_id' in t) template.parent_id = String(t.parent_id) || null;
 
-        toast({
-          title: "Template Deleted",
-          description: "Contract template has been successfully deleted.",
-        });
-        
-        // Invalidate queries to refresh the list
-        queryClient.invalidateQueries({ queryKey: ['contract-templates'] });
-      } catch (error: any) {
-        toast({
-          variant: "destructive", 
-          title: "Error",
-          description: error.message || "Failed to delete template",
-        });
-      }
-      setTemplateToDelete(null);
-    }
-    setIsDeleteDialogOpen(false);
-  };
+                    return {
+                        is_current_version: true,
+                        version_number: 1,
+                        parent_id: null,
+                        ...template
+                    } as ContractTemplate;
+                }) || [];
+            } catch (error) {
+                console.error('Error fetching templates:', error);
+                throw error;
+            }
+        }
+    });
 
-  if (isLoadingTemplates) {
-    return <div>Loading templates...</div>;
-  }
+    const handleToggleActive = async (id: string, isActive: boolean) => {
+        try {
+            const {error} = await supabase
+                .from('contract_templates')
+                .update({is_active: isActive})
+                .eq('id', id);
 
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Contract Templates</h1>
-          <p className="text-muted-foreground">Manage contract templates with placeholders</p>
-        </div>
-        <Button onClick={handleCreateTemplate}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Template
-        </Button>
-      </div>
+            if (error) throw error;
 
-      {/* Available Placeholders Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Available Placeholders</CardTitle>
-          <CardDescription>Use these placeholders in your contract templates</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-            <Badge variant="outline">{'{{contract_number}}'}</Badge>
-            <Badge variant="outline">{'{{contract_date}}'}</Badge>
-            <Badge variant="outline">{'{{customer_name}}'}</Badge>
-            <Badge variant="outline">{'{{customer_email}}'}</Badge>
-            <Badge variant="outline">{'{{customer_phone}}'}</Badge>
-            <Badge variant="outline">{'{{customer_license}}'}</Badge>
-            <Badge variant="outline">{'{{vehicle_brand}}'}</Badge>
-            <Badge variant="outline">{'{{vehicle_model}}'}</Badge>
-            <Badge variant="outline">{'{{vehicle_year}}'}</Badge>
-            <Badge variant="outline">{'{{vehicle_license_plate}}'}</Badge>
-            <Badge variant="outline">{'{{pickup_date}}'}</Badge>
-            <Badge variant="outline">{'{{return_date}}'}</Badge>
-            <Badge variant="outline">{'{{pickup_location}}'}</Badge>
-            <Badge variant="outline">{'{{return_location}}'}</Badge>
-            <Badge variant="outline">{'{{duration_days}}'}</Badge>
-            <Badge variant="outline">{'{{daily_rate}}'}</Badge>
-            <Badge variant="outline">{'{{total_amount}}'}</Badge>
-          </div>
-        </CardContent>
-      </Card>
+            toast({
+                title: "Template Updated",
+                description: `Template has been ${isActive ? 'enabled' : 'disabled'}.`,
+            });
+            refetch();
+        } catch (error: any) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: error.message || "Failed to update template status",
+            });
+        }
+    };
 
-      {/* Templates Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Templates</CardTitle>
-          <CardDescription>Manage your contract templates</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search templates..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+    const handleDelete = async (id: string) => {
+        try {
+            const {error} = await supabase
+                .from('contract_templates')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+
+            toast({
+                title: "Template Deleted",
+                description: "Contract template has been successfully deleted.",
+            });
+            refetch();
+        } catch (error: any) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: error.message || "Failed to delete template",
+            });
+        }
+    };
+
+    const handleShowVersions = (templateId: string) => {
+        setSelectedTemplateId(templateId);
+        setShowVersionsModal(true);
+    };
+
+    if (isLoading) return <div>Loading templates...</div>;
+
+    return (
+        <div className="space-y-6">
+            <TemplateVersionsModal
+                isOpen={showVersionsModal}
+                templateId={selectedTemplateId}
+                onClose={() => setShowVersionsModal(false)}
+            />
+
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Contract Templates</h1>
+                    <p className="text-muted-foreground">Manage your contract templates</p>
+                </div>
+                {templates?.length === 0 && (
+                    <Button asChild>
+                        <Link to="/admin/contract-templates/create">
+                            <Plus className="w-4 h-4 mr-2"/>
+                            New Template
+                        </Link>
+                    </Button>
+                )}
             </div>
-          </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTemplates.map((template) => (
-                <TableRow key={template.id}>
-                  <TableCell className="font-medium">{template.name}</TableCell>
-                  <TableCell className="max-w-xs truncate">{template.description}</TableCell>
-                  <TableCell>
-                    <Badge variant={template.is_active ? "default" : "secondary"}>
-                      {template.is_active ? (
-                        <>
-                          <ToggleRight className="w-3 h-3 mr-1" />
-                          Active
-                        </>
-                      ) : (
-                        <>
-                          <ToggleLeft className="w-3 h-3 mr-1" />
-                          Inactive
-                        </>
-                      )}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(template.created_at), 'MMM dd, yyyy')}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditTemplate(template)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteTemplate(template.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <ContractTemplateModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        template={selectedTemplate}
-      />
-
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the contract template.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  );
+            <div className="rounded-md border bg-white">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead>Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {templates?.map((template) => (
+                            <TableRow key={template.id}>
+                                <TableCell className="font-medium">{template.name}</TableCell>
+                                <TableCell>
+                                    {template.is_active ? (
+                                        <span className="text-green-600">Active</span>
+                                    ) : (
+                                        <span className="text-gray-500">Inactive</span>
+                                    )}
+                                </TableCell>
+                                <TableCell>
+                                    {new Date(template.created_at).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex gap-2 items-center">
+                                        <Switch
+                                            checked={template.is_active}
+                                            onCheckedChange={() => handleToggleActive(template.id, !template.is_active)}
+                                            className="data-[state=checked]:bg-green-600"
+                                        />
+                                        <Button variant="outline" size="sm" asChild>
+                                            <Link to={`/admin/contract-templates/edit/${template.id}`}>
+                                                <Edit className="w-4 h-4"/>
+                                            </Link>
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleShowVersions(template.id)}
+                                        >
+                                            <History className="w-4 h-4"/>
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleDelete(template.id)}
+                                        >
+                                            <Trash2 className="w-4 h-4"/>
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+    );
 };

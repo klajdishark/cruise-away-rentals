@@ -5,11 +5,13 @@ import { DashboardOverview } from '@/components/admin/DashboardOverview';
 import { FleetManagement } from '@/components/admin/FleetManagement';
 import { CategoryManagement } from '@/components/admin/CategoryManagement';
 import { BookingManagement } from '@/components/admin/BookingManagement';
-import { ContractManagement } from '@/components/admin/ContractManagement';
+import { ContractTemplateManagement } from '@/components/admin/ContractTemplateManagement';
 import { CustomerManagement } from '@/components/admin/CustomerManagement';
 import { PaymentsInvoicing } from '@/components/admin/PaymentsInvoicing';
 import { ReportsAnalytics } from '@/components/admin/ReportsAnalytics';
 import { SystemSettings } from '@/components/admin/SystemSettings';
+import { ContractTemplateCreate } from './ContractTemplateCreate';
+import { ContractTemplateEdit } from './ContractTemplateEdit';
 
 export default function AdminDashboard() {
   return (
@@ -22,7 +24,9 @@ export default function AdminDashboard() {
             <Route path="fleet" element={<FleetManagement />} />
             <Route path="categories" element={<CategoryManagement />} />
             <Route path="bookings" element={<BookingManagement />} />
-            <Route path="contracts" element={<ContractManagement />} />
+            <Route path="contract-templates" element={<ContractTemplateManagement />} />
+            <Route path="contract-templates/create" element={<ContractTemplateCreate />} />
+            <Route path="contract-templates/edit/:id" element={<ContractTemplateEdit />} />
             <Route path="customers" element={<CustomerManagement />} />
             <Route path="payments" element={<PaymentsInvoicing />} />
             <Route path="reports" element={<ReportsAnalytics />} />

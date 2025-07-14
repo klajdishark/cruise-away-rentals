@@ -17,7 +17,7 @@ const navItems = [
   { to: '/admin/fleet', icon: Car, label: 'Fleet Management' },
   { to: '/admin/categories', icon: Tag, label: 'Categories' },
   { to: '/admin/bookings', icon: Calendar, label: 'Bookings' },
-  { to: '/admin/contracts', icon: FileText, label: 'Contracts' },
+  { to: '/admin/contract-templates', icon: FileText, label: 'Contract Templates' },
   { to: '/admin/customers', icon: Users, label: 'Customers' },
   { to: '/admin/payments', icon: CreditCard, label: 'Payments' },
   { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
