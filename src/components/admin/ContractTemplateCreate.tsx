@@ -2,13 +2,21 @@ import React from 'react';
 import {useForm} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
-import {Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage,} from '@/components/ui/form';
-import {RichTextEditor} from '@/components/admin/RichTextEditor';
-import {ContractTemplatePreview} from '@/components/admin/ContractTemplatePreview';
-import {supabase} from '@/integrations/supabase/client';
-import {useToast} from '@/hooks/use-toast';
+import {Button} from '@/components/ui/button.tsx';
+import {Input} from '@/components/ui/input.tsx';
+import {
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from '@/components/ui/form.tsx';
+import {RichTextEditor} from '@/components/admin/RichTextEditor.tsx';
+import {ContractTemplatePreview} from '@/components/admin/ContractTemplatePreview.tsx';
+import {supabase} from '@/integrations/supabase/client.ts';
+import {useToast} from '@/hooks/use-toast.ts';
 import {useQueryClient} from '@tanstack/react-query';
 import {useNavigate} from 'react-router-dom';
 
@@ -39,7 +47,7 @@ export const ContractTemplateCreate = () => {
 
     const handleSubmit = async (data: TemplateFormData) => {
         try {
-            const { data: newTemplate, error: createError } = await supabase
+            const {data: newTemplate, error: createError} = await supabase
                 .from('contract_templates')
                 .insert({
                     name: data.name,

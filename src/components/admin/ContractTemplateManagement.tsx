@@ -114,28 +114,54 @@ export const ContractTemplateManagement = () => {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        try {
-            const {error} = await supabase
-                .from('contract_templates')
-                .delete()
-                .eq('id', id);
+    const handleDelete = async () => {
+        const confirmed = confirm('Are you sure you want to delete ALL versions of this template?');
+        if (!confirmed) return;
 
-            if (error) throw error;
+        const {data, error: fetchError} = await supabase
+            .from('contract_templates')
+            .select('id');
+
+        try {
+            if (fetchError) {
+                toast({
+                    variant: "destructive",
+                    title: "Fetch Error",
+                    description: fetchError.message || "Failed to fetch template IDs",
+                });
+                return;
+            }
+
+            for (const row of data) {
+                const {error: deleteError} = await supabase
+                    .from('contract_templates')
+                    .delete()
+                    .eq('id', row.id);
+
+                if (deleteError) {
+                    toast({
+                        variant: "destructive",
+                        title: `Delete Error (ID: ${row.id})`,
+                        description: deleteError.message || `Failed to delete row with ID ${row.id}`,
+                    });
+                }
+            }
 
             toast({
-                title: "Template Deleted",
-                description: "Contract template has been successfully deleted.",
+                title: "Templates Deleted",
+                description: "All versions of the template have been deleted.",
             });
+
             refetch();
-        } catch (error: any) {
+        } catch (error) {
             toast({
                 variant: "destructive",
-                title: "Error",
-                description: error.message || "Failed to delete template",
+                title: "Unexpected Error",
+                description: error.message || "An error occurred while deleting templates.",
             });
         }
     };
+
 
     const handleShowVersions = (templateId: string) => {
         setSelectedTemplateId(templateId);
