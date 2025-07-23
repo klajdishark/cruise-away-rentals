@@ -90,11 +90,6 @@ export const BookingManagement = () => {
     const [isCreateContractOpen, setIsCreateContractOpen] = useState(false);
     const [selectedContractBooking, setSelectedContractBooking] = useState<any | null>(null);
 
-    // Debug logging to help identify issues
-    console.log('Booking forms loaded:', bookingForms);
-    console.log('Total bookings:', bookings.length);
-    console.log('Completed bookings:', bookings.filter(b => b.status === 'completed').length);
-
     const filteredBookings = bookings.filter(booking => {
         const customerName = booking.customers?.name || '';
         const bookingId = booking.id || '';
@@ -120,19 +115,16 @@ export const BookingManagement = () => {
     };
 
     const handleOpenDeliveryForm = (booking: any) => {
-        console.log('Opening delivery form for booking:', booking.id);
         setSelectedDeliveryBooking(booking);
         setIsDeliveryFormOpen(true);
     };
 
     const handleOpenReviewModal = (booking: any) => {
-        console.log('Opening review modal for booking:', booking.id);
         setSelectedReviewBooking(booking);
         setIsReviewModalOpen(true);
     };
 
     const handleDeliveryFormSubmit = (formData: any) => {
-        console.log('Submitting delivery form data:', formData);
         createOrUpdateBookingForm(formData);
     };
 
@@ -331,13 +323,6 @@ export const BookingManagement = () => {
                                 const deliveryForm = getDeliveryForm(booking.id);
                                 const hasDeliveryForm = !!deliveryForm;
                                 const isDeliveryFormCompleted = deliveryForm?.completed_at;
-
-                                console.log(`Booking ${booking.id}:`, {
-                                    status: booking.status,
-                                    hasDeliveryForm,
-                                    isDeliveryFormCompleted,
-                                    deliveryForm
-                                });
 
                                 return (
                                     <TableRow key={booking.id}>

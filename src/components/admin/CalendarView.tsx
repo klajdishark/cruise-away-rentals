@@ -6,70 +6,77 @@ import {MonthView} from './calendar/MonthView';
 import {WeekView} from './calendar/WeekView';
 import {DayView} from './calendar/DayView';
 import {BookingModal} from './BookingModal';
-
-interface Booking {
-    id: string;
-    customer: string;
-    vehicle: string;
-    startDate: string;
-    endDate: string;
-    status: 'pending' | 'confirmed' | 'active' | 'completed' | 'canceled';
-    total: number;
-    duration: number;
-    notes?: string;
-}
+import {BookingsListModal} from './BookingsListModal';
+import {useBookings} from '@/hooks/useBookings';
+import {Tables} from '@/integrations/supabase/types';
 
 type ViewMode = 'month' | 'week' | 'day';
 
-const mockBookings: Booking[] = [
-    {
-        id: 'BK001',
-        customer: 'John Doe',
-        vehicle: 'Toyota Camry 2023',
-        startDate: '2024-01-15',
-        endDate: '2024-01-20',
-        status: 'confirmed',
-        total: 225,
-        duration: 5,
-    },
-    {
-        id: 'BK002',
-        customer: 'Jane Smith',
-        vehicle: 'Honda Civic 2022',
-        startDate: '2024-01-18',
-        endDate: '2024-01-22',
-        status: 'pending',
-        total: 160,
-        duration: 4,
-    },
-    {
-        id: 'BK003',
-        customer: 'Mike Johnson',
-        vehicle: 'BMW X5 2023',
-        startDate: '2024-01-10',
-        endDate: '2024-01-15',
-        status: 'completed',
-        total: 425,
-        duration: 5,
-    },
-    {
-        id: 'BK004',
-        customer: 'Sarah Wilson',
-        vehicle: 'Tesla Model 3 2023',
-        startDate: '2024-01-20',
-        endDate: '2024-01-25',
-        status: 'active',
-        total: 375,
-        duration: 5,
-    },
-];
+export interface CalendarBooking {
+    id: string;
+    customer: string;
+    customer_id: string;
+    vehicle: string;
+    vehicle_id: string;
+    startDate: string;
+    endDate: string;
+    startTime?: string;
+    endTime?: string;
+    pickupLocation?: string;
+    dropoffLocation?: string;
+    dailyRate?: number;
+    status: 'pending' | 'confirmed' | 'active' | 'completed' | 'canceled';
+    bookingType?: 'online' | 'offline';
+    total: number;
+    duration: number;
+    notes?: string;
+    customers?: Tables<'customers'>;
+    vehicles?: Tables<'vehicles'>;
+}
+
+const calculateDuration = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+const calculateTotal = (startDate: string, endDate: string, dailyRate: number) => {
+    const duration = calculateDuration(startDate, endDate);
+    return duration * (dailyRate || 0);
+};
 
 export const CalendarView = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewMode, setViewMode] = useState<ViewMode>('month');
-    const [bookings, setBookings] = useState<Booking[]>(mockBookings);
+    const {bookings: supabaseBookings, isLoading, error, createBooking, updateBooking} = useBookings();
+
+    const bookings = supabaseBookings.map(booking => ({
+        id: booking.id,
+        customer: booking.customers?.name || 'Unknown',
+        customer_id: booking.customer_id,
+        vehicle: `${booking.vehicles?.brand} ${booking.vehicles?.model} ${booking.vehicles?.year}`,
+        vehicle_id: booking.vehicle_id,
+        startDate: booking.start_date,
+        endDate: booking.end_date,
+        startTime: booking.start_time,
+        endTime: booking.end_time,
+        pickupLocation: booking.pickup_location,
+        dropoffLocation: booking.dropoff_location,
+        dailyRate: booking.daily_rate,
+        status: booking.status,
+        bookingType: booking.booking_type as 'online' | 'offline',
+        total: booking.total_amount,
+        duration: booking.duration_days,
+        notes: booking.notes,
+        customers: booking.customers as Tables<'customers'>,
+        vehicles: booking.vehicles as Tables<'vehicles'>
+    }));
+
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedBooking, setSelectedBooking] = useState<Booking | undefined>();
+    const [isListModalOpen, setIsListModalOpen] = useState(false);
+    const [selectedBooking, setSelectedBooking] = useState<CalendarBooking | undefined>();
+    const [selectedDateBookings, setSelectedDateBookings] = useState<CalendarBooking[]>([]);
+    const [selectedDateRange, setSelectedDateRange] = useState<{startDate: string, endDate: string} | null>(null);
 
     const navigateDate = (direction: 'prev' | 'next') => {
         const newDate = new Date(currentDate);
@@ -89,34 +96,54 @@ export const CalendarView = () => {
         setCurrentDate(newDate);
     };
 
-    const handleBookingClick = (booking: Booking) => {
-        setSelectedBooking(booking);
-        setIsModalOpen(true);
+    const handleBookingClick = (booking: CalendarBooking | { id: string, date: string, bookings: CalendarBooking[] }) => {
+        if ('bookings' in booking) {
+            setSelectedDateBookings(booking.bookings);
+            setIsListModalOpen(true);
+            setIsModalOpen(false);
+        } else {
+            setIsModalOpen(false); // Close modal first to reset state
+            setTimeout(() => {
+                setSelectedBooking(booking);
+                setIsModalOpen(true);
+            }, 100);
+            setIsListModalOpen(false);
+        }
     };
 
-    const handleCreateBooking = (date?: Date) => {
+    const handleCreateBooking = (dateRange?: {startDate: string, endDate: string}) => {
         setSelectedBooking(undefined);
+        setSelectedDateRange(dateRange || null);
         setIsModalOpen(true);
     };
 
     const handleSubmitBooking = (data: any) => {
+        if (!data.customer_id || !data.vehicle_id) {
+            // Show error to user
+            return;
+        }
+
+        const bookingData = {
+            customer_id: data.customer_id,
+            vehicle_id: data.vehicle_id,
+            start_date: data.start_date,
+            end_date: data.end_date,
+            start_time: data.start_time || '09:00:00',
+            end_time: data.end_time || '09:00:00',
+            pickup_location: data.pickup_location,
+            dropoff_location: data.dropoff_location,
+            daily_rate: data.daily_rate,
+            status: data.status || 'pending',
+            booking_type: data.booking_type || 'offline',
+            total_amount: calculateTotal(data.start_date, data.end_date, data.daily_rate),
+            duration_days: calculateDuration(data.start_date, data.end_date),
+            notes: data.notes || ''
+        };
+
         if (selectedBooking) {
-            setBookings(bookings.map(booking =>
-                booking.id === selectedBooking.id
-                    ? {
-                        ...booking,
-                        ...data,
-                        duration: Math.ceil((new Date(data.endDate).getTime() - new Date(data.startDate).getTime()) / (1000 * 60 * 60 * 24))
-                    }
-                    : booking
-            ));
+            updateBooking({id: selectedBooking.id, ...bookingData});
         } else {
-            const newBooking: Booking = {
-                id: `BK${String(bookings.length + 1).padStart(3, '0')}`,
-                ...data,
-                duration: Math.ceil((new Date(data.endDate).getTime() - new Date(data.startDate).getTime()) / (1000 * 60 * 60 * 24))
-            };
-            setBookings([...bookings, newBooking]);
+            createBooking(bookingData);
         }
     };
 
@@ -255,6 +282,16 @@ export const CalendarView = () => {
                 onClose={() => setIsModalOpen(false)}
                 booking={selectedBooking}
                 onSubmit={handleSubmitBooking}
+            />
+            <BookingsListModal
+                isOpen={isListModalOpen}
+                onClose={() => setIsListModalOpen(false)}
+                bookings={selectedDateBookings}
+                onEdit={(booking) => {
+                    setIsListModalOpen(false);
+                    setSelectedBooking(booking);
+                    setIsModalOpen(true);
+                }}
             />
         </div>
     );

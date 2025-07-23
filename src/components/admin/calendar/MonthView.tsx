@@ -1,22 +1,12 @@
-import React from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 
-interface Booking {
-    id: string;
-    customer: string;
-    vehicle: string;
-    startDate: string;
-    endDate: string;
-    status: 'pending' | 'confirmed' | 'active' | 'completed' | 'canceled';
-    total: number;
-    duration: number;
-    notes?: string;
-}
+import {CalendarBooking} from '../CalendarView';
 
 interface MonthViewProps {
     currentDate: Date;
-    bookings: Booking[];
-    onBookingClick: (booking: Booking) => void;
-    onDateClick: (date: Date) => void;
+    bookings: CalendarBooking[];
+    onBookingClick: (booking: CalendarBooking | { id: string, date: string, bookings: CalendarBooking[] }) => void;
+    onDateClick: (dateRange: {startDate: string, endDate: string}) => void;
 }
 
 const getStatusColor = (status: string) => {
@@ -37,6 +27,48 @@ const getStatusColor = (status: string) => {
 };
 
 export const MonthView = ({currentDate, bookings, onBookingClick, onDateClick}: MonthViewProps) => {
+    const [selectionStart, setSelectionStart] = useState<Date | null>(null);
+    const [selectionEnd, setSelectionEnd] = useState<Date | null>(null);
+    const [isSelecting, setIsSelecting] = useState(false);
+    const calendarRef = useRef<HTMLDivElement>(null);
+
+    const handleMouseDown = (date: Date) => {
+        setSelectionStart(date);
+        setSelectionEnd(date);
+        setIsSelecting(true);
+    };
+
+    const handleMouseEnter = (date: Date) => {
+        if (isSelecting && selectionStart) {
+            setSelectionEnd(date);
+        }
+    };
+
+    const handleMouseUp = () => {
+        if (isSelecting && selectionStart && selectionEnd) {
+            const start = selectionStart < selectionEnd ? selectionStart : selectionEnd;
+            const end = selectionStart < selectionEnd ? selectionEnd : selectionStart;
+            const startStr = start.toISOString().split('T')[0];
+            const endStr = end.toISOString().split('T')[0];
+            onDateClick({startDate: startStr, endDate: endStr});
+        }
+        setIsSelecting(false);
+        setSelectionStart(null);
+        setSelectionEnd(null);
+    };
+
+    useEffect(() => {
+        const handleGlobalMouseUp = () => {
+            if (isSelecting) {
+                handleMouseUp();
+            }
+        };
+
+        document.addEventListener('mouseup', handleGlobalMouseUp);
+        return () => {
+            document.removeEventListener('mouseup', handleGlobalMouseUp);
+        };
+    }, [isSelecting, selectionStart, selectionEnd]);
     const getDaysInMonth = () => {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
@@ -99,11 +131,21 @@ export const MonthView = ({currentDate, bookings, onBookingClick, onDateClick}: 
                     <div
                         key={date.toISOString()}
                         className={`
-              min-h-[120px] p-2 border border-border cursor-pointer hover:bg-muted/50 transition-colors
+              min-h-[120px] p-2 border border-border transition-colors relative
               ${isOtherMonth ? 'text-muted-foreground bg-muted/20' : ''}
               ${isCurrentDay ? 'bg-primary/10 border-primary' : ''}
+              ${selectionStart && selectionEnd && date >= selectionStart && date <= selectionEnd ? 'bg-blue-100' : ''}
+              ${selectionStart && selectionEnd && (date.getTime() === selectionStart.getTime() || date.getTime() === selectionEnd.getTime()) ? 'border-blue-500 border-2' : ''}
+              cursor-pointer hover:bg-muted/50
             `}
-                        onClick={() => onDateClick(date)}
+                        onMouseDown={() => handleMouseDown(date)}
+                        onMouseEnter={() => handleMouseEnter(date)}
+                        onClick={() => {
+                            if (!isSelecting && dayBookings.length === 0) {
+                                const dateStr = date.toISOString().split('T')[0];
+                                onDateClick({startDate: dateStr, endDate: dateStr});
+                            }
+                        }}
                     >
                         <div className={`text-sm font-medium mb-1 ${isCurrentDay ? 'text-primary' : ''}`}>
                             {date.getDate()}
@@ -128,7 +170,17 @@ export const MonthView = ({currentDate, bookings, onBookingClick, onDateClick}: 
                             ))}
 
                             {dayBookings.length > 2 && (
-                                <div className="text-xs text-muted-foreground p-1">
+                                <div 
+                                    className="text-xs text-muted-foreground p-1 bg-background/80 rounded hover:bg-muted cursor-pointer"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onBookingClick({
+                                            id: 'list-view',
+                                            date: date.toISOString(),
+                                            bookings: dayBookings
+                                        });
+                                    }}
+                                >
                                     +{dayBookings.length - 2} more
                                 </div>
                             )}

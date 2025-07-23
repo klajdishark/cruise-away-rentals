@@ -141,7 +141,6 @@ export const useBookingForms = () => {
     // Get delivery form for a booking
     const getDeliveryForm = (bookingId: string) => {
         const form = bookingForms.find(form => form.booking_id === bookingId && form.form_type === 'delivery');
-        console.log(`Getting delivery form for booking ${bookingId}:`, form);
         return form;
     };
 

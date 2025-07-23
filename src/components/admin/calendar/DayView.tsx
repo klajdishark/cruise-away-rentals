@@ -1,21 +1,36 @@
 import React from 'react';
 
-interface Booking {
+interface CalendarBooking {
     id: string;
     customer: string;
+    customer_id: string;
     vehicle: string;
+    vehicle_id: string;
     startDate: string;
     endDate: string;
     status: 'pending' | 'confirmed' | 'active' | 'completed' | 'canceled';
     total: number;
     duration: number;
     notes?: string;
+    customers?: {
+        id: string;
+        name: string;
+        email: string;
+        phone: string;
+    };
+    vehicles?: {
+        id: string;
+        brand: string;
+        model: string;
+        year: number;
+        license_plate: string;
+    };
 }
 
 interface DayViewProps {
     currentDate: Date;
-    bookings: Booking[];
-    onBookingClick: (booking: Booking) => void;
+    bookings: CalendarBooking[];
+    onBookingClick: (booking: CalendarBooking | { id: string, date: string, bookings: CalendarBooking[] }) => void;
     onDateClick: (date: Date) => void;
 }
 

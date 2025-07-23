@@ -13,6 +13,7 @@ import {useCustomers} from '@/hooks/useCustomers';
 import {useVehicles} from '@/hooks/useVehicles';
 import {useVehicleAvailability} from '@/hooks/useVehicleAvailability';
 import {Tables} from '@/integrations/supabase/types';
+import {CalendarBooking} from './CalendarView';
 
 const bookingSchema = z.object({
     customer_id: z.string().min(1, 'Customer selection is required'),
@@ -33,12 +34,13 @@ type BookingFormData = z.infer<typeof bookingSchema>;
 type Booking = Tables<'bookings'>;
 
 interface BookingFormProps {
-    booking?: any; // Extended booking with customer and vehicle details
-    onSubmit: (data: BookingFormData) => void;
+    booking?: CalendarBooking;
+    initialDates?: {startDate: string, endDate: string};
+    onSubmit: (data: any) => void;
     onCancel: () => void;
 }
 
-export const BookingForm = ({booking, onSubmit, onCancel}: BookingFormProps) => {
+export const BookingForm = ({booking, initialDates, onSubmit, onCancel}: BookingFormProps) => {
     const {customers, isLoading: customersLoading} = useCustomers();
     const {vehicles, loading: vehiclesLoading} = useVehicles();
     const {checkAvailability, isChecking} = useVehicleAvailability();
@@ -46,23 +48,32 @@ export const BookingForm = ({booking, onSubmit, onCancel}: BookingFormProps) => 
     const [isVehicleAvailable, setIsVehicleAvailable] = useState(true);
     const [availabilityMessage, setAvailabilityMessage] = useState('');
 
+    console.log(booking);
+
     const form = useForm<BookingFormData>({
         resolver: zodResolver(bookingSchema),
         defaultValues: {
             customer_id: booking?.customer_id || '',
             vehicle_id: booking?.vehicle_id || '',
-            start_date: booking?.start_date || '',
-            end_date: booking?.end_date || '',
-            start_time: booking?.start_time || '09:00:00',
-            end_time: booking?.end_time || '09:00:00',
-            pickup_location: booking?.pickup_location || '',
-            dropoff_location: booking?.dropoff_location || '',
-            daily_rate: booking?.daily_rate || 0,
+            start_date: booking?.startDate || '',
+            end_date: booking?.endDate || '',
+            start_time: booking?.startTime || '09:00:00',
+            end_time: booking?.endTime || '09:00:00',
+            pickup_location: booking?.pickupLocation || '',
+            dropoff_location: booking?.dropoffLocation || '',
+            daily_rate: booking?.dailyRate || 0,
             status: booking?.status || 'pending',
-            booking_type: booking?.booking_type || 'offline',
+            booking_type: booking?.bookingType || 'offline',
             notes: booking?.notes || '',
         },
     });
+
+    useEffect(() => {
+        if (initialDates && !booking) {
+            form.setValue('start_date', initialDates.startDate);
+            form.setValue('end_date', initialDates.endDate);
+        }
+    }, [initialDates, form, booking]);
 
     // Watch for changes in vehicle, start date, and end date
     const selectedVehicleId = form.watch('vehicle_id');
