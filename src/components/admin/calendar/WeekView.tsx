@@ -1,4 +1,5 @@
 import React from 'react';
+import {formatLocalDate} from '@/lib/utils';
 
 interface CalendarBooking {
     id: string;
@@ -67,7 +68,7 @@ export const WeekView = ({currentDate, bookings, onBookingClick, onDateClick}: W
     };
 
     const getBookingsForDate = (date: Date) => {
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = formatLocalDate(date);
         return bookings.filter(booking => {
             const startDate = new Date(booking.startDate);
             const endDate = new Date(booking.endDate);

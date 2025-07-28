@@ -111,9 +111,16 @@ export const CalendarView = () => {
         }
     };
 
-    const handleCreateBooking = (dateRange?: {startDate: string, endDate: string}) => {
+    const handleCreateBooking = (date?: Date | {startDate: string, endDate: string}) => {
+        if (date instanceof Date) {
+            const dateString = date.toISOString().split('T')[0];
+            setSelectedDateRange({ startDate: dateString, endDate: dateString });
+        } else if (date) {
+            setSelectedDateRange(date);
+        } else {
+            setSelectedDateRange(null);
+        }
         setSelectedBooking(undefined);
-        setSelectedDateRange(dateRange || null);
         setIsModalOpen(true);
     };
 
@@ -182,7 +189,7 @@ export const CalendarView = () => {
                         currentDate={currentDate}
                         bookings={bookings}
                         onBookingClick={handleBookingClick}
-                        onDateClick={handleCreateBooking}
+                        onDateClick={(date) => handleCreateBooking(date)}
                     />
                 );
             case 'week':
@@ -215,7 +222,7 @@ export const CalendarView = () => {
                     <h1 className="text-3xl font-bold tracking-tight">Calendar View</h1>
                     <p className="text-muted-foreground">Manage bookings in calendar format</p>
                 </div>
-                <Button onClick={() => handleCreateBooking()}>
+                <Button onClick={() => handleCreateBooking(undefined)}>
                     <Plus className="w-4 h-4 mr-2"/>
                     New Booking
                 </Button>
@@ -281,6 +288,7 @@ export const CalendarView = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 booking={selectedBooking}
+                initialDates={selectedDateRange}
                 onSubmit={handleSubmitBooking}
             />
             <BookingsListModal

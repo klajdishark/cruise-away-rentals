@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-
+import {formatLocalDate} from '@/lib/utils';
 import {CalendarBooking} from '../CalendarView';
 
 interface MonthViewProps {
@@ -48,8 +48,8 @@ export const MonthView = ({currentDate, bookings, onBookingClick, onDateClick}: 
         if (isSelecting && selectionStart && selectionEnd) {
             const start = selectionStart < selectionEnd ? selectionStart : selectionEnd;
             const end = selectionStart < selectionEnd ? selectionEnd : selectionStart;
-            const startStr = start.toISOString().split('T')[0];
-            const endStr = end.toISOString().split('T')[0];
+            const startStr = formatLocalDate(start);
+            const endStr = formatLocalDate(end);
             onDateClick({startDate: startStr, endDate: endStr});
         }
         setIsSelecting(false);
@@ -92,7 +92,7 @@ export const MonthView = ({currentDate, bookings, onBookingClick, onDateClick}: 
     };
 
     const getBookingsForDate = (date: Date) => {
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = formatLocalDate(date);
         return bookings.filter(booking => {
             const startDate = new Date(booking.startDate);
             const endDate = new Date(booking.endDate);
@@ -142,7 +142,7 @@ export const MonthView = ({currentDate, bookings, onBookingClick, onDateClick}: 
                         onMouseEnter={() => handleMouseEnter(date)}
                         onClick={() => {
                             if (!isSelecting && dayBookings.length === 0) {
-                                const dateStr = date.toISOString().split('T')[0];
+                                const dateStr = formatLocalDate(date);
                                 onDateClick({startDate: dateStr, endDate: dateStr});
                             }
                         }}

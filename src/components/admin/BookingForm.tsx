@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {formatLocalDate} from '@/lib/utils';
 import {useForm} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -55,8 +56,8 @@ export const BookingForm = ({booking, initialDates, onSubmit, onCancel}: Booking
         defaultValues: {
             customer_id: booking?.customer_id || '',
             vehicle_id: booking?.vehicle_id || '',
-            start_date: booking?.startDate || '',
-            end_date: booking?.endDate || '',
+            start_date: booking?.startDate || (initialDates ? initialDates.startDate : ''),
+            end_date: booking?.endDate || (initialDates ? initialDates.endDate : ''),
             start_time: booking?.startTime || '09:00:00',
             end_time: booking?.endTime || '09:00:00',
             pickup_location: booking?.pickupLocation || '',
@@ -67,13 +68,23 @@ export const BookingForm = ({booking, initialDates, onSubmit, onCancel}: Booking
             notes: booking?.notes || '',
         },
     });
-
+    
+    // Update form values when initialDates change
     useEffect(() => {
         if (initialDates && !booking) {
-            form.setValue('start_date', initialDates.startDate);
-            form.setValue('end_date', initialDates.endDate);
+            form.setValue('start_date', formatLocalDate(new Date(initialDates.startDate)));
+            form.setValue('end_date', formatLocalDate(new Date(initialDates.endDate)));
         }
-    }, [initialDates, form, booking]);
+    }, [initialDates, booking, form]);
+
+    useEffect(() => {
+        console.log('BookingForm initialDates:', initialDates);
+        if (initialDates) {
+            console.log('Setting form dates:', initialDates.startDate, initialDates.endDate);
+            form.setValue('start_date', formatLocalDate(new Date(initialDates.startDate)));
+            form.setValue('end_date', formatLocalDate(new Date(initialDates.endDate)));
+        }
+    }, [initialDates, form]);
 
     // Watch for changes in vehicle, start date, and end date
     const selectedVehicleId = form.watch('vehicle_id');
